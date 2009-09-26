@@ -12,8 +12,12 @@
  #include "macros.h"
  #include "dbus/dbus.h"
 
+ typedef IngressFilters (char *IFilters[]);
+
  EDBUS_BEGIN_DECLS
-   void ingress_init();
+
+   void ingress_init(DBusBusType BusType, IngressFilters *);
+
  EDBUS_END_DECLS
 
 
