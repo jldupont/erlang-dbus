@@ -1,3 +1,12 @@
 erlang-dbus README
 ==================
 
+Dependencies
+============
+
+* DBus 1.0
+
+
+Building
+========
+
