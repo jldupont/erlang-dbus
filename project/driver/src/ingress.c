@@ -5,3 +5,10 @@
  * @author jldupont
  */
 
+#include <pthread.h>
+#include "ingress.h"
+
+
+void ingress_init(DBusBusType BusType, IngressFilters *) {
+
+}//
