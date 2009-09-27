@@ -31,5 +31,4 @@
 #  endif /* !__cplusplus */
 #endif
 
-
 #endif /* MACROS_H_ */

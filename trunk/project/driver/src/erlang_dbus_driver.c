@@ -6,11 +6,17 @@
  *
  * \section Overview
  *
- * The driver is split in two parts:
- * 1) an ingress direction (DBus   --> Erlang)
- * 2) an egress direction  (Erlang --> DBus)
+ *   \subsection Command-Line
  *
- * The 'egress' direction can optionally be disabled: this saves a running thread.
+ *    erlang_dbus_driver.so [--system] [--session] [--noegress] Filter(s)
+ *
+ *   \subsection Architecture
+ *
+ *    The driver is split in two parts:
+ *    1) an ingress direction (DBus   --> Erlang)
+ *    2) an egress direction  (Erlang --> DBus)
+ *
+ *    The 'egress' direction can optionally be disabled: this saves a running thread.
  *
  * \section DBus primitive types
  *
@@ -79,6 +85,28 @@
  *
  */
 int main(int argc, char **argv) {
+
+	  DBusConnection *connection;
+	  DBusError error;
+	  DBusBusType type = DBUS_BUS_SESSION;
+	  int noegress=FALSE;
+
+	  int i = 0;
+	  for (i = 1; i < argc; i++) {
+
+		  char *arg = argv[i];
+
+		  if (!strcmp (arg, "--system"))
+			  ingress_set_bus(DBUS_BUS_SYSTEM);
+		  else if (!strcmp (arg, "--session"))
+			  ingress_set_bus(DBUS_BUS_SESSION);
+		  else if (!strcmp (arg, "--noegress"))
+			  noegress=TRUE;
+		  else {
+			  ingress_add_filter(arg);
+		  }
+
+	  }
 
 	/*
 	 * Start 'ingress' thread
