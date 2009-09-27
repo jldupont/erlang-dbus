@@ -8,11 +8,13 @@
 #ifndef ERLANG_DBUS_DRIVER_H_
 #define ERLANG_DBUS_DRIVER_H_
 
-/**
- * Process Exit Codes
- */
+	/**
+	 * Process Exit Codes
+	 */
 
-#define E
+	#define EDBUS_OK          0
+	#define EDBUS_CONN_ERROR  1
+
 
 
 #endif /* ERLANG_DBUS_DRIVER_H_ */

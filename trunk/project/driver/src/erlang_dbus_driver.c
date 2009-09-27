@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
 			  ingress_set_bus(DBUS_BUS_SESSION);
 		  else if (0==strcmp (arg, "--noegress"))
 			  noegress=TRUE;
-		  else if (0==strcmp (arg, "--ingress"))
+		  else if (0==strcmp (arg, "--noingress"))
 			  noingress=TRUE;
 		  else {
 			  ingress_add_filter(arg);
@@ -111,6 +111,18 @@ int main(int argc, char **argv) {
 	  }
 
 	  dbus_error_init (&error);
+
+	  connection = dbus_bus_get (type, &error);
+	  if (NULL==connection) {
+		  exit(EDBUS_CONN_ERROR);
+	  }
+
+	/*
+	 * Start 'egress' thread (if required)
+	 */
+	  if (FALSE==noegress) {
+		  egress_init(connection);
+	  }
 
 
 	/*
@@ -121,11 +133,10 @@ int main(int argc, char **argv) {
 	}
 
 
-	/*
-	 * Start 'egress' thread (if required)
-	 */
-	  if (FALSE==noegress) {
-		  egress_init(connection);
-	  }
+	  /*
+	   *   MAIN LOOP  (ingress)
+	   */
+	  while (dbus_connection_read_write_dispatch(connection, -1));
 
+	  exit (EDBUS_OK);
 }//

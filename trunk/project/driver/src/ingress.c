@@ -28,6 +28,8 @@ void ingress_add_filter(char *filter) {
 }
 
 void ingress_init(DBusConnection *conn) {
+	DBusError error;
 	IConn=conn;
+
 
 }//
