@@ -11,7 +11,7 @@
 char *IFilters[INGRESS_MAX_FILTERS+1];
 int IFilterCount=0;
 DBusBusType    IBusType=NULL;
-DBusConnection IConn=NULL;
+DBusConnection *IConn=NULL;
 
 void ingress_set_bus(DBusBusType BusType) {
 	IBusType=BusType;
@@ -27,7 +27,7 @@ void ingress_add_filter(char *filter) {
 	IFilters[IFilterCount++]=filter;
 }
 
-void ingress_init(DBusConnection conn) {
+void ingress_init(DBusConnection *conn) {
 	IConn=conn;
 
 }//

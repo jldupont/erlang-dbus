@@ -24,17 +24,12 @@
 #include "queue.h"
 
 
-// Input Queue
-queue *_egressQueue;
-
-// Switch Thread
+DBConnection *EConn;
 pthread_t _egressThread;
 
+void egress_init(DBusConnection *conn) {
 
-void
-egress_init() {
-
-	_egressQueue = queue_create(-1);
+	EConn=conn;
 	pthread_create(&_egressThread, NULL, &__egress_thread_function, NULL);
 
 }//
