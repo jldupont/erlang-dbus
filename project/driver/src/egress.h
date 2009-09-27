@@ -12,7 +12,7 @@
 
  EDBUS_BEGIN_DECLS
 
-	 void egress_init(DBusConnection conn);
+	 void egress_init(DBusConnection *conn);
 
  EDBUS_END_DECLS
 

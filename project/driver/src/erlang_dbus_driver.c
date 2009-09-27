@@ -8,7 +8,7 @@
  *
  *   \subsection Command-Line
  *
- *    erlang_dbus_driver.so [--system] [--session] [--noegress] Filter(s)
+ *    erlang_dbus_driver.so [--system] [--session] [--noingress] [--noegress] Filter(s)
  *
  *   \subsection Architecture
  *
@@ -90,32 +90,42 @@ int main(int argc, char **argv) {
 	  DBusError error;
 	  DBusBusType type = DBUS_BUS_SESSION;
 	  int noegress=FALSE;
+	  int noingress=FALSE;
 
 	  int i = 0;
 	  for (i = 1; i < argc; i++) {
 
 		  char *arg = argv[i];
 
-		  if (!strcmp (arg, "--system"))
+		  if (0==strcmp (arg, "--system"))
 			  ingress_set_bus(DBUS_BUS_SYSTEM);
-		  else if (!strcmp (arg, "--session"))
+		  else if (0==strcmp (arg, "--session"))
 			  ingress_set_bus(DBUS_BUS_SESSION);
-		  else if (!strcmp (arg, "--noegress"))
+		  else if (0==strcmp (arg, "--noegress"))
 			  noegress=TRUE;
+		  else if (0==strcmp (arg, "--ingress"))
+			  noingress=TRUE;
 		  else {
 			  ingress_add_filter(arg);
 		  }
-
 	  }
+
+	  dbus_error_init (&error);
+
 
 	/*
 	 * Start 'ingress' thread
 	 */
-
+	if (FALSE==noingress) {
+	  ingress_init(connection);
+	}
 
 
 	/*
 	 * Start 'egress' thread (if required)
 	 */
+	  if (FALSE==noegress) {
+		  egress_init(connection);
+	  }
 
 }//
