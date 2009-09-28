@@ -483,9 +483,7 @@ void queue_signal(queue *q) {
 
 	pthread_mutex_lock( q->mutex );
 
-		int rc = pthread_cond_signal( q->cond );
-		//if (rc)
-
+		pthread_cond_signal( q->cond );
 
 	pthread_mutex_unlock( q->mutex );
 }

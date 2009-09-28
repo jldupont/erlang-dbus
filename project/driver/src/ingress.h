@@ -10,7 +10,7 @@
 #define INGRESS_H_
 
  #include "macros.h"
- #include "dbus/dbus.h"
+ #include <dbus/dbus.h>
 
  #define INGRESS_MAX_FILTERS 255
 

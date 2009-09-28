@@ -6,7 +6,7 @@
  */
 #include <stdlib.h>
 #include <pthread.h>
-#include "dbus/dbus.h"
+#include <dbus/dbus.h>
 #include "ingress.h"
 #include "erlang_dbus_driver.h"
 
@@ -17,6 +17,7 @@ DBusConnection *IConn=NULL;
 
 static DBusHandlerResult ingress_filter_func (DBusConnection *connection,DBusMessage     *message,void            *user_data);
 void handle_message(DBusMessage *message, void *user_data);
+
 
 void ingress_set_bus(DBusBusType BusType) {
 	IBusType=BusType;
@@ -91,14 +92,10 @@ handle_message(DBusMessage *message, void *user_data) {
   case DBUS_MESSAGE_TYPE_SIGNAL:
 
 	case DBUS_MESSAGE_TYPE_METHOD_RETURN:
-	  printf (" reply_serial=%u\n",
-        dbus_message_get_reply_serial (message));
+        dbus_message_get_reply_serial (message);
 	  break;
 
 	case DBUS_MESSAGE_TYPE_ERROR:
-	  printf (" error_name=%s reply_serial=%u\n",
-		  dbus_message_get_error_name (message),
-        dbus_message_get_reply_serial (message));
 	  break;
 
 	default:
