@@ -20,12 +20,15 @@
  *
  */
 #include <pthread.h>
+#include "dbus/dbus.h"
 #include "egress.h"
 #include "queue.h"
 
 
-DBConnection *EConn;
+DBusConnection *EConn;
 pthread_t _egressThread;
+
+void *__egress_thread_function(void *params);
 
 void egress_init(DBusConnection *conn) {
 

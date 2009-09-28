@@ -18,27 +18,6 @@
  *
  *    The 'egress' direction can optionally be disabled: this saves a running thread.
  *
- * \section DBus primitive types
- *
- *  BYTE
- *  BOOLEAN
- *  INT16
- *  UINT16
- *  INT32
- *  UINT32
- *  INT64
- *  UINT64
- *  DOUBLE
- *  STRING
- *  OBJECT_PATH
- *  SIGNATURE
- *
- * \section DBus compound types
- *
- *  ARRAY
- *  VARIANT
- *  STRUCT
- *  DICT
  *
  *  \section Adaptation to Erlang (type mapping)
  *
@@ -60,6 +39,16 @@
  *    VARIANT
  *    STRUCT              list()                       Does not appear to be in use
  *    DICT                [{Key, Value}]
+ *
+ *   \subsection Term to Erlang Client
+ *
+ *   {msg, Type, Serial, Sender, Destination, Path, Interface, Member, Message}
+ *
+ *	 Type=atom()
+ *	 Serial=int()
+ *   Sender=Destination=Path=Interface=Member=string()
+ *   Message=term()
+ *
  *
  */
 #include "erlang_dbus_driver.h"

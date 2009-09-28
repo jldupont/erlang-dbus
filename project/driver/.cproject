@@ -30,7 +30,9 @@
 <option id="gnu.c.compiler.exe.debug.option.debugging.level.148558151" name="Debug Level" superClass="gnu.c.compiler.exe.debug.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
 <option id="gnu.c.compiler.option.include.paths.361508948" name="Include paths (-I)" superClass="gnu.c.compiler.option.include.paths" valueType="includePath">
 <listOptionValue builtIn="false" value="/usr/include/dbus-1.0"/>
+<listOptionValue builtIn="false" value="/usr/lib/dbus-1.0/include"/>
 </option>
+<option id="gnu.c.compiler.option.misc.other.1984681464" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="" valueType="string"/>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.291973021" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.exe.debug.1128628405" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.exe.debug">
@@ -304,7 +306,7 @@
 </scannerInfoProvider>
 </profile>
 </scannerConfigBuildInfo>
-<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1367099885;cdt.managedbuild.config.gnu.exe.release.1367099885.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.1766631251;cdt.managedbuild.tool.gnu.c.compiler.input.722213480">
+<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.324476548;cdt.managedbuild.config.gnu.exe.debug.324476548.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.702881102;cdt.managedbuild.tool.gnu.c.compiler.input.291973021">
 <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 <profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
 <buildOutputProvider>
@@ -387,7 +389,7 @@
 </scannerInfoProvider>
 </profile>
 </scannerConfigBuildInfo>
-<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.324476548;cdt.managedbuild.config.gnu.exe.debug.324476548.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.702881102;cdt.managedbuild.tool.gnu.c.compiler.input.291973021">
+<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1367099885;cdt.managedbuild.config.gnu.exe.release.1367099885.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.1766631251;cdt.managedbuild.tool.gnu.c.compiler.input.722213480">
 <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 <profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
 <buildOutputProvider>
@@ -768,7 +770,7 @@
 </scannerInfoProvider>
 </profile>
 </scannerConfigBuildInfo>
-<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1367099885;cdt.managedbuild.config.gnu.exe.release.1367099885.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.1766631251;cdt.managedbuild.tool.gnu.c.compiler.input.722213480">
+<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.324476548;cdt.managedbuild.config.gnu.exe.debug.324476548.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.702881102;cdt.managedbuild.tool.gnu.c.compiler.input.291973021">
 <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 <profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
 <buildOutputProvider>
@@ -851,7 +853,7 @@
 </scannerInfoProvider>
 </profile>
 </scannerConfigBuildInfo>
-<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.debug.324476548;cdt.managedbuild.config.gnu.exe.debug.324476548.;cdt.managedbuild.tool.gnu.c.compiler.exe.debug.702881102;cdt.managedbuild.tool.gnu.c.compiler.input.291973021">
+<scannerConfigBuildInfo instanceId="cdt.managedbuild.config.gnu.exe.release.1367099885;cdt.managedbuild.config.gnu.exe.release.1367099885.;cdt.managedbuild.tool.gnu.c.compiler.exe.release.1766631251;cdt.managedbuild.tool.gnu.c.compiler.input.722213480">
 <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.managedbuilder.core.GCCManagedMakePerProjectProfileC"/>
 <profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
 <buildOutputProvider>
