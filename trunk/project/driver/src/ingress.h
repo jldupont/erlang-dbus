@@ -14,13 +14,9 @@
 
  #define INGRESS_MAX_FILTERS 255
 
- EDBUS_BEGIN_DECLS
-
-	 void ingress_add_filter(char *filter);
-	 void ingress_set_bus(DBusBusType BusType);
-	 void ingress_init(DBusConnection *conn);
-
- EDBUS_END_DECLS
+ void ingress_add_filter(char *filter);
+ void ingress_set_bus(DBusBusType BusType);
+ void ingress_init(DBusConnection *conn);
 
  typedef union _EDBusMessage {
 		 int type;

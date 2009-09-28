@@ -4,7 +4,7 @@
  * @date   2009-09-26
  * @author jldupont
  */
-
+#include <stdlib.h>
 #include <pthread.h>
 #include "dbus/dbus.h"
 #include "ingress.h"
@@ -16,7 +16,7 @@ DBusBusType    IBusType;
 DBusConnection *IConn=NULL;
 
 static DBusHandlerResult ingress_filter_func (DBusConnection *connection,DBusMessage     *message,void            *user_data);
-
+void handle_message(DBusMessage *message, void *user_data);
 
 void ingress_set_bus(DBusBusType BusType) {
 	IBusType=BusType;
