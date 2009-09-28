@@ -19,6 +19,7 @@
  *  Signature:
  *
  */
+#include <stdlib.h>
 #include <pthread.h>
 #include "dbus/dbus.h"
 #include "egress.h"
