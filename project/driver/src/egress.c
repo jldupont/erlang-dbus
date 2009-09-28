@@ -22,7 +22,7 @@
 #include <pthread.h>
 #include "dbus/dbus.h"
 #include "egress.h"
-#include "queue.h"
+#include "erlang_dbus_driver.h"
 
 
 DBusConnection *EConn;
@@ -41,6 +41,5 @@ void egress_init(DBusConnection *conn) {
 void *
 __egress_thread_function(void *params) {
 
-
-
+	return NULL;
 }//

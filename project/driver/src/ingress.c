@@ -6,12 +6,17 @@
  */
 
 #include <pthread.h>
+#include "dbus/dbus.h"
 #include "ingress.h"
+#include "erlang_dbus_driver.h"
 
 char *IFilters[INGRESS_MAX_FILTERS+1];
 int IFilterCount=0;
-DBusBusType    IBusType=NULL;
+DBusBusType    IBusType;
 DBusConnection *IConn=NULL;
+
+static DBusHandlerResult ingress_filter_func (DBusConnection *connection,DBusMessage     *message,void            *user_data);
+
 
 void ingress_set_bus(DBusBusType BusType) {
 	IBusType=BusType;
@@ -44,7 +49,6 @@ void ingress_init(DBusConnection *connection) {
 	}
 
 	if (!dbus_connection_add_filter (connection, ingress_filter_func, NULL, NULL)) {
-	  fprintf (stderr, "Couldn't add filter!\n");
 	  exit (1);
 	}
 }//

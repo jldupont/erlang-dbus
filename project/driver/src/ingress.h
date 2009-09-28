@@ -28,15 +28,16 @@
 		 const char *dest;
 		 dbus_uint32_t serial;
 
-		 struct Method_Signal {
+		 struct _Method_Signal {
 			 const char *path;
 			 const char *interface;
 			 const char *member;
-		 };
-		 struct Reply {};
-		 struct Error {
+		 } Method_Signal;
+
+		 struct _Reply {} Reply;
+		 struct _Error {
 			 const char *name;
-		 };
+		 } Error;
 	 } EDBusMessage;
 
 

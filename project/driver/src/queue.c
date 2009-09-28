@@ -60,8 +60,6 @@ queue *queue_create(int id) {
 
 	} else {
 
-		DEBUG_LOG(LOG_DEBUG, "queue_create: MALLOC ERROR");
-
 		if (NULL!=q)
 			free(q);
 
@@ -89,8 +87,6 @@ queue *queue_create(int id) {
 void queue_destroy(queue *q) {
 
 	if (NULL==q) {
-
-		DEBUG_LOG(LOG_DEBUG, "queue_destroy: NULL queue ptr");
 		return;
 	}
 	pthread_mutex_t *mutex = q->mutex;
@@ -118,7 +114,6 @@ void queue_destroy(queue *q) {
 int queue_put(queue *q, void *node) {
 
 	if ((NULL==q) || (NULL==node)) {
-		DEBUG_LOG(LOG_DEBUG, "queue_put: NULL queue/node ptr");
 		return 0;
 	}
 
@@ -129,8 +124,6 @@ int queue_put(queue *q, void *node) {
 			pthread_cond_signal( q->cond );
 
 	pthread_mutex_unlock( q->mutex );
-
-	//DEBUG_LOG(LOG_DEBUG,"queue_put: q[%x] node[%x] END",q,node);
 
 	return code;
 }//[/queue_put]
@@ -148,7 +141,6 @@ int queue_put(queue *q, void *node) {
 int queue_put_nb(queue *q, void *node) {
 
 	if ((NULL==q) || (NULL==node)) {
-		DEBUG_LOG(LOG_DEBUG, "queue_put_nb: NULL queue/node ptr");
 		return 0;
 	}
 
@@ -176,7 +168,6 @@ int queue_put_nb(queue *q, void *node) {
 queue_put_wait(queue *q, void *node) {
 
 	if ((NULL==q) || (NULL==node)) {
-		DEBUG_LOG(LOG_DEBUG, "queue_put_nb: NULL queue/node ptr");
 		return 0;
 	}
 
@@ -195,21 +186,17 @@ queue_put_wait(queue *q, void *node) {
 			break;
 
 		} else {
-			//DEBUG_LOG(LOG_DEBUG,"queue_put_wait: BEFORE LOCK q[%x][%i]", q, q->id);
 			pthread_mutex_lock( q->mutex );
 
-				//DEBUG_LOG(LOG_DEBUG,"queue_put_wait: BEFORE COND_WAIT q[%x][%i]", q, q->id);
 				int rc = pthread_cond_wait( q->cond, q->mutex );
 				if (ETIMEDOUT==rc) {
 					code = 1;//not an error to have timed-out really
 					break;
 				} else {
 					code = 0;
-					DEBUG_LOG(LOG_ERR,"queue_put_wait: CONDITION WAIT ERROR");
 				}
 
 			pthread_mutex_unlock( q->mutex );
-			//DEBUG_LOG(LOG_DEBUG,"queue_put_wait: AFTER LOCK q[%x][%i]", q, q->id);
 		}
 
 	}
@@ -255,7 +242,6 @@ queue_put_safe( queue *q, void *node ) {
 
 		q->total_in++;
 		q->num++;
-		//DEBUG_LOG(LOG_DEBUG,"queue_put_safe: q[%x] id[%i] num[%i] in[%i] out[%i]", q, q->id, q->num, q->total_in, q->total_out);
 
 	} else {
 
@@ -275,7 +261,6 @@ queue_put_safe( queue *q, void *node ) {
 void *queue_get(queue *q) {
 
 	if (NULL==q) {
-		DEBUG_LOG(LOG_DEBUG, "queue_get: NULL queue ptr");
 		return NULL;
 	}
 
@@ -298,7 +283,6 @@ void *queue_get(queue *q) {
 void *queue_get_nb(queue *q) {
 
 	if (NULL==q) {
-		DEBUG_LOG(LOG_DEBUG, "queue_get_nb: NULL queue ptr");
 		return NULL;
 	}
 
@@ -325,7 +309,6 @@ void *queue_get_nb(queue *q) {
 int queue_wait(queue *q) {
 
 	if (NULL==q) {
-		DEBUG_LOG(LOG_DEBUG, "queue_get_wait: NULL queue ptr");
 		return 1;
 	}
 
@@ -342,7 +325,6 @@ int queue_wait(queue *q) {
 		if ((ETIMEDOUT==rc) || (0==rc)){
 			rc=0;
 		} else {
-			DEBUG_LOG(LOG_ERR,"queue_get_wait: CONDITION WAIT ERROR, code[%i]", rc);
 			rc=1;
 		}
 
@@ -361,7 +343,6 @@ int queue_wait(queue *q) {
 int queue_wait_timer(queue *q, int usec_timer) {
 
 	if (NULL==q) {
-		DEBUG_LOG(LOG_DEBUG, "queue_get_wait: NULL queue ptr");
 		return 1;
 	}
 	/*
@@ -403,7 +384,6 @@ int queue_wait_timer(queue *q, int usec_timer) {
 		}
 
 		// it seems we need to wait...
-		//DEBUG_LOG(LOG_DEBUG,"queue_wait: BEFORE COND_WAIT on q[%x][%i]",q,q->id);
 		int rc = pthread_cond_timedwait( q->cond, q->mutex, &timeout );
 		if ((ETIMEDOUT==rc) || (0==rc)){
 			rc=0;
@@ -412,20 +392,6 @@ int queue_wait_timer(queue *q, int usec_timer) {
 			//... the user might also have messed up,
 			//so at least provide a log
 			if (rc==EINVAL){
-
-				DEBUG_LOG(LOG_DEBUG,"queue_wait_timer: now.tv_sec[%li] now.tv_usec[%li]",
-						now.tv_sec,
-						now.tv_nsec);
-
-				DEBUG_LOG(LOG_DEBUG,"queue_wait_timer: timeout.tv_sec[%li] timeout.tv_nsec[%li]",
-						timeout.tv_sec,
-						timeout.tv_nsec);
-
-				DEBUG_LOG(LOG_DEBUG,"queue_wait_timer: COND ERROR q[%x][%i] result[%i] sec[%li] nsec[%li] usec[%li]",
-						q,q->id,rc,
-						timeout.tv_sec,
-						timeout.tv_nsec,
-						usec_timer);
 				rc=0;
 			} else {
 				//something else is wrong then...
@@ -433,7 +399,6 @@ int queue_wait_timer(queue *q, int usec_timer) {
 			}
 		}
 	pthread_mutex_unlock( q->mutex );
-	//DEBUG_LOG(LOG_DEBUG,"queue_wait: AFTER LOCK on q[%x][%i]",q,q->id);
 
 	return rc;
 }//
@@ -473,9 +438,8 @@ void *__queue_get_safe(queue *q) {
 			count++;
 			tmp = tmp->next;
 		}
-		//DEBUG_LOG(LOG_DEBUG,"QQQ: q[%x] id[%3i] num[%3i] in[%4i] out[%4i] COUNT[%4i]", q, q->id, q->num, q->total_in, q->total_out, count);
 		if ((in-out) != count) {
-			DEBUG_LOG(LOG_ERR, "__queue_get_safe: >>> ERROR <<<  q[%x][%i]", q, q->id);
+			// debug...
 		}
 		//}
 
@@ -495,7 +459,6 @@ void *__queue_get_safe(queue *q) {
 int queue_peek(queue *q) {
 
 	if (NULL==q) {
-		DEBUG_LOG(LOG_DEBUG, "queue_peek: NULL queue ptr");
 		return -1;
 	}
 
@@ -521,8 +484,8 @@ void queue_signal(queue *q) {
 	pthread_mutex_lock( q->mutex );
 
 		int rc = pthread_cond_signal( q->cond );
-		if (rc)
-			DEBUG_LOG(LOG_DEBUG,"queue_signal: SIGNAL ERROR");
+		//if (rc)
+
 
 	pthread_mutex_unlock( q->mutex );
 }
@@ -542,7 +505,6 @@ void queue_signal(queue *q) {
 queue_put_head_nb(queue *q, void *node) {
 
 	if ((NULL==q) || (NULL==node)) {
-		DEBUG_LOG(LOG_DEBUG, "queue_put_head_nb: NULL queue/node ptr");
 		return 0;
 	}
 
@@ -573,7 +535,6 @@ queue_put_head_nb(queue *q, void *node) {
 int   queue_put_head(queue *q, void *node) {
 
 	if ((NULL==q) || (NULL==node)) {
-		DEBUG_LOG(LOG_DEBUG, "queue_put_head: NULL queue/node ptr");
 		return 0;
 	}
 
@@ -602,7 +563,6 @@ int   queue_put_head(queue *q, void *node) {
 queue_put_head_wait(queue *q, void *node) {
 
 	if ((NULL==q) || (NULL==node)) {
-		DEBUG_LOG(LOG_DEBUG, "queue_put_head_wait: NULL queue/node ptr");
 		return 0;
 	}
 
@@ -623,20 +583,16 @@ queue_put_head_wait(queue *q, void *node) {
 
 		} else {
 
-			//DEBUG_LOG(LOG_DEBUG,"queue_put_head_wait: BEFORE LOCK q[%x][%i]", q, q->id);
 			pthread_mutex_lock( q->mutex );
 
-				//DEBUG_LOG(LOG_DEBUG,"queue_put_head_wait: BEFORE COND_WAIT q[%x][%i]", q, q->id);
 				int rc = pthread_cond_wait( q->cond, q->mutex );
 				if (ETIMEDOUT==rc) {
 					rc=1;
 				} else {
-					DEBUG_LOG(LOG_ERR,"queue_put_wait: CONDITION WAIT ERROR, code[%i]",rc);
 					rc=0;
 				}
 
 			pthread_mutex_unlock( q->mutex );
-			//DEBUG_LOG(LOG_DEBUG,"queue_put_head_wait: AFTER LOCK q[%x][%i]", q, q->id);
 		}
 
 	}

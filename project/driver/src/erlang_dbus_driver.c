@@ -51,10 +51,12 @@
  *
  *
  */
-#include "erlang_dbus_driver.h"
 #include <stdio.h>
 #include <string.h>
 #include <dbus/dbus.h>
+#include "erlang_dbus_driver.h"
+#include "ingress.h"
+#include "egress.h"
 #include "queue.h"
 
 
