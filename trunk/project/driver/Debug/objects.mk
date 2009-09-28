@@ -4,4 +4,4 @@
 
 USER_OBJS :=
 
-LIBS :=
+LIBS := -ldbus-1 -lpthread

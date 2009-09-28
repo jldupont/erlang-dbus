@@ -23,19 +23,19 @@ endif
 # Add inputs and outputs from these tool invocations to the build variables 
 
 # All Target
-all: liberlang-dbus-driver
+all: soerlang-dbus-driver.so
 
 # Tool invocations
-liberlang-dbus-driver: $(OBJS) $(USER_OBJS)
+soerlang-dbus-driver.so: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	gcc -shared -Wl,-soname=liberlang_dbus -o"liberlang-dbus-driver" $(OBJS) $(USER_OBJS) $(LIBS)
+	gcc -shared -Wl,-soname=liberlang_dbus -o"soerlang-dbus-driver.so" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) $(OBJS)$(C_DEPS)$(LIBRARIES) liberlang-dbus-driver
+	-$(RM) $(OBJS)$(C_DEPS)$(LIBRARIES) soerlang-dbus-driver.so
 	-@echo ' '
 
 .PHONY: all clean dependents

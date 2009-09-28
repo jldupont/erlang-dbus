@@ -1,5 +1,5 @@
-src/egress.d src/egress.o: ../src/egress.c \
-  /usr/include/dbus-1.0/dbus/dbus.h \
+src/erlang_dbus_driver.d src/erlang_dbus_driver.o:  \
+ ../src/erlang_dbus_driver.c /usr/include/dbus-1.0/dbus/dbus.h \
   /usr/lib/dbus-1.0/include/dbus/dbus-arch-deps.h \
   /usr/include/dbus-1.0/dbus/dbus-macros.h \
   /usr/include/dbus-1.0/dbus/dbus-address.h \
@@ -15,8 +15,8 @@ src/egress.d src/egress.o: ../src/egress.c \
   /usr/include/dbus-1.0/dbus/dbus-protocol.h \
   /usr/include/dbus-1.0/dbus/dbus-server.h \
   /usr/include/dbus-1.0/dbus/dbus-signature.h \
-  /usr/include/dbus-1.0/dbus/dbus-threads.h ../src/egress.h \
-  ../src/macros.h ../src/erlang_dbus_driver.h
+  /usr/include/dbus-1.0/dbus/dbus-threads.h ../src/erlang_dbus_driver.h \
+  ../src/ingress.h ../src/macros.h ../src/egress.h ../src/queue.h
 
 /usr/include/dbus-1.0/dbus/dbus.h:
 
@@ -52,8 +52,12 @@ src/egress.d src/egress.o: ../src/egress.c \
 
 /usr/include/dbus-1.0/dbus/dbus-threads.h:
 
-../src/egress.h:
+../src/erlang_dbus_driver.h:
+
+../src/ingress.h:
 
 ../src/macros.h:
 
-../src/erlang_dbus_driver.h:
+../src/egress.h:
+
+../src/queue.h:
