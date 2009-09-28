@@ -33,7 +33,7 @@
 <listOptionValue builtIn="false" value="/usr/include/dbus-1.0"/>
 <listOptionValue builtIn="false" value="/usr/lib/dbus-1.0/include"/>
 </option>
-<option id="gnu.c.compiler.option.misc.other.1984681464" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-pthread" valueType="string"/>
+<option id="gnu.c.compiler.option.misc.other.1984681464" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-pthread -lrt -L//lib -ldbus-1" valueType="string"/>
 <option id="gnu.c.compiler.option.misc.verbose.1230284807" name="Verbose (-v)" superClass="gnu.c.compiler.option.misc.verbose" value="false" valueType="boolean"/>
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.291973021" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
@@ -42,7 +42,11 @@
 <option id="gnu.c.link.option.soname.954733689" name="Shared object name (-Wl,-soname=)" superClass="gnu.c.link.option.soname" value="liberlang_dbus" valueType="string"/>
 <option id="gnu.c.link.option.libs.141758810" name="Libraries (-l)" superClass="gnu.c.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="dbus-1"/>
+<listOptionValue builtIn="false" value="rt"/>
 <listOptionValue builtIn="false" value="pthread"/>
+</option>
+<option id="gnu.c.link.option.paths.1654431147" name="Library search path (-L)" superClass="gnu.c.link.option.paths" valueType="libPaths">
+<listOptionValue builtIn="false" value="//lib"/>
 </option>
 <inputType id="cdt.managedbuild.tool.gnu.c.linker.input.1375984102" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
