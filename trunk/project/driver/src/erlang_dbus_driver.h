@@ -12,8 +12,10 @@
 	 * Process Exit Codes
 	 */
 
-	#define EDBUS_OK          0
-	#define EDBUS_CONN_ERROR  1
+	#define EDBUS_OK              0
+	#define EDBUS_CONN_ERROR      1
+	#define EDBUS_DISCONNECTED    2
+	#define EDBUS_ADD_MATCH_ERROR 3
 
 
 

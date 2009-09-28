@@ -22,6 +22,23 @@
 
  EDBUS_END_DECLS
 
+ typedef union _EDBusMessage {
+		 int type;
+		 const char *sender;
+		 const char *dest;
+		 dbus_uint32_t serial;
+
+		 struct Method_Signal {
+			 const char *path;
+			 const char *interface;
+			 const char *member;
+		 };
+		 struct Reply {};
+		 struct Error {
+			 const char *name;
+		 };
+	 } EDBusMessage;
+
 
 
 #endif /* INGRESS_H_ */
