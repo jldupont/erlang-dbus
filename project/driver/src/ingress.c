@@ -99,7 +99,6 @@ handle_message(DBusMessage *message, void *user_data) {
 	  break;
 
 	default:
-	  printf ("\n");
 	  break;
 
   }
