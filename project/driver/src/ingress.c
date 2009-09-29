@@ -88,20 +88,29 @@ handle_message(DBusMessage *message, void *user_data) {
   edmsg.dest =   dbus_message_get_destination (message);
 
   switch(edmsg.type) {
-  case DBUS_MESSAGE_TYPE_METHOD_CALL:
-  case DBUS_MESSAGE_TYPE_SIGNAL:
+	  case DBUS_MESSAGE_TYPE_METHOD_CALL:
+	  case DBUS_MESSAGE_TYPE_SIGNAL:
+		  edmsg.serial = dbus_message_get_serial (message);
+		  edmsg.Method_Signal.path = dbus_message_get_path (message);
+		  edmsg.Method_Signal.interface = dbus_message_get_interface (message);
+		  edmsg.Method_Signal.member = dbus_message_get_member (message);
+		  break;
 
 	case DBUS_MESSAGE_TYPE_METHOD_RETURN:
-        dbus_message_get_reply_serial (message);
-	  break;
+		edmsg.serial = dbus_message_get_reply_serial (message);
+        break;
 
 	case DBUS_MESSAGE_TYPE_ERROR:
-	  break;
+		edmsg.serial = dbus_message_get_reply_serial (message);
+		edmsg.Error.name = dbus_message_get_error_name (message);
+		break;
 
 	default:
 	  break;
 
   }
+
+  dbus_message_iter_init (message, &iter);
 
 
 
