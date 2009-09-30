@@ -20,7 +20,7 @@
 </extensions>
 </storageModule>
 <storageModule moduleId="cdtBuildSystem" version="4.0.0">
-<configuration artifactExtension="so" artifactName="erlang-dbus-driver" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.sharedLib" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.sharedLib" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.so.debug.992888948" name="Debug" parent="cdt.managedbuild.config.gnu.so.debug">
+<configuration artifactName="erlang-dbus-driver" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.so.debug.992888948" name="Debug" parent="cdt.managedbuild.config.gnu.so.debug">
 <folderInfo id="cdt.managedbuild.config.gnu.so.debug.992888948." name="/" resourcePath="">
 <toolChain id="cdt.managedbuild.toolchain.gnu.so.debug.504252362" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.so.debug">
 <targetPlatform id="cdt.managedbuild.target.gnu.platform.so.debug.1028230348" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.so.debug"/>
@@ -40,9 +40,10 @@
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1696305686" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.so.debug.75661998" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.so.debug">
-<option defaultValue="true" id="gnu.c.link.so.debug.option.shared.957995142" name="Shared (-shared)" superClass="gnu.c.link.so.debug.option.shared" valueType="boolean"/>
+<option id="gnu.c.link.so.debug.option.shared.957995142" name="Shared (-shared)" superClass="gnu.c.link.so.debug.option.shared"/>
 <option id="gnu.c.link.option.libs.181744966" name="Libraries (-l)" superClass="gnu.c.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="rt"/>
+<listOptionValue builtIn="false" value="epapi"/>
 <listOptionValue builtIn="false" value="dbus-1"/>
 <listOptionValue builtIn="false" value="pthread"/>
 </option>
@@ -55,7 +56,7 @@
 </inputType>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.so.debug.9502481" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.so.debug">
-<option defaultValue="true" id="gnu.cpp.link.so.debug.option.shared.582682634" name="Shared (-shared)" superClass="gnu.cpp.link.so.debug.option.shared" valueType="boolean"/>
+<option id="gnu.cpp.link.so.debug.option.shared.582682634" name="Shared (-shared)" superClass="gnu.cpp.link.so.debug.option.shared"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.assembler.so.debug.1940069608" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.so.debug">
 <inputType id="cdt.managedbuild.tool.gnu.assembler.input.1769720507" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
@@ -315,6 +316,8 @@
 </storageModule>
 <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 <storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
+<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cconfiguration>
 <cconfiguration id="cdt.managedbuild.config.gnu.so.release.1559079003">
 <storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.config.gnu.so.release.1559079003" moduleId="org.eclipse.cdt.core.settings" name="Release">
@@ -333,7 +336,7 @@
 </extensions>
 </storageModule>
 <storageModule moduleId="cdtBuildSystem" version="4.0.0">
-<configuration artifactExtension="so" artifactName="erlang-dbus-driver" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.sharedLib" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.sharedLib" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.so.release.1559079003" name="Release" parent="cdt.managedbuild.config.gnu.so.release">
+<configuration artifactName="erlang-dbus-driver" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release,org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.so.release.1559079003" name="Release" parent="cdt.managedbuild.config.gnu.so.release">
 <folderInfo id="cdt.managedbuild.config.gnu.so.release.1559079003." name="/" resourcePath="">
 <toolChain id="cdt.managedbuild.toolchain.gnu.so.release.2011338076" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.so.release">
 <targetPlatform id="cdt.managedbuild.target.gnu.platform.so.release.1307037199" name="Debug Platform" superClass="cdt.managedbuild.target.gnu.platform.so.release"/>
@@ -349,14 +352,20 @@
 <inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.1657675792" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.so.release.103864112" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.so.release">
-<option defaultValue="true" id="gnu.c.link.so.release.option.shared.1694765051" name="Shared (-shared)" superClass="gnu.c.link.so.release.option.shared" valueType="boolean"/>
+<option id="gnu.c.link.so.release.option.shared.1694765051" name="Shared (-shared)" superClass="gnu.c.link.so.release.option.shared"/>
+<option id="gnu.c.link.option.libs.2101281271" superClass="gnu.c.link.option.libs" valueType="libs">
+<listOptionValue builtIn="false" value="rt"/>
+<listOptionValue builtIn="false" value="epapi"/>
+<listOptionValue builtIn="false" value="dbus-1"/>
+<listOptionValue builtIn="false" value="pthread"/>
+</option>
 <inputType id="cdt.managedbuild.tool.gnu.c.linker.input.1153766870" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 <additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 <additionalInput kind="additionalinput" paths="$(LIBS)"/>
 </inputType>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.cpp.linker.so.release.1120520473" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.so.release">
-<option defaultValue="true" id="gnu.cpp.link.so.release.option.shared.1505048039" name="Shared (-shared)" superClass="gnu.cpp.link.so.release.option.shared" valueType="boolean"/>
+<option id="gnu.cpp.link.so.release.option.shared.1505048039" name="Shared (-shared)" superClass="gnu.cpp.link.so.release.option.shared"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.assembler.so.release.377207371" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.so.release">
 <inputType id="cdt.managedbuild.tool.gnu.assembler.input.1064275138" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
@@ -616,6 +625,8 @@
 </storageModule>
 <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 <storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
+<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cconfiguration>
 </storageModule>
 <storageModule moduleId="cdtBuildSystem" version="4.0.0">
