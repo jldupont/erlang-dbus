@@ -5,6 +5,9 @@
 <storageModule moduleId="org.eclipse.cdt.core.settings">
 <cconfiguration id="cdt.managedbuild.config.gnu.so.debug.992888948">
 <storageModule buildSystemId="org.eclipse.cdt.managedbuilder.core.configurationDataProvider" id="cdt.managedbuild.config.gnu.so.debug.992888948" moduleId="org.eclipse.cdt.core.settings" name="Debug">
+<macros>
+<stringMacro name="_DEBUG" type="VALUE_TEXT" value=""/>
+</macros>
 <externalSettings>
 <externalSetting>
 <entry flags="VALUE_WORKSPACE_PATH" kind="includePath" name="/erlang-dbus-driver"/>
@@ -353,7 +356,7 @@
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.linker.so.release.103864112" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.so.release">
 <option id="gnu.c.link.so.release.option.shared.1694765051" name="Shared (-shared)" superClass="gnu.c.link.so.release.option.shared"/>
-<option id="gnu.c.link.option.libs.2101281271" superClass="gnu.c.link.option.libs" valueType="libs">
+<option id="gnu.c.link.option.libs.2101281271" name="Libraries (-l)" superClass="gnu.c.link.option.libs" valueType="libs">
 <listOptionValue builtIn="false" value="rt"/>
 <listOptionValue builtIn="false" value="epapi"/>
 <listOptionValue builtIn="false" value="dbus-1"/>
