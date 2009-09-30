@@ -5,8 +5,11 @@ Dependencies
 ============
 
 * DBus 1.0
+* EPAPI  (available @ http://epapi.googlecode.com/ )
 
 
 Building
 ========
+
+make
 
