@@ -1,5 +1,5 @@
 /**
- * @file erlang_dbus_driver.c
+ * @file erlang_dbus_driver.cc
  *
  * @date 2009-09-26
  * @author Jean-Lou Dupont

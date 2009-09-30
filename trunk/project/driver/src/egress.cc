@@ -1,5 +1,5 @@
 /**
- * @file egress.c
+ * @file egress.cc
  *
  * @date   2009-09-26
  * @author jldupont

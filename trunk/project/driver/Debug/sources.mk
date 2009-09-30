@@ -9,7 +9,7 @@ OBJ_SRCS :=
 ASM_SRCS := 
 OBJS := 
 C_DEPS := 
-LIBRARIES := 
+EXECUTABLES := 
 
 # Every subdirectory with source files must be described here
 SUBDIRS := \

@@ -1,8 +1,11 @@
 /**
- * @file ingress.c
+ * @file ingress.cc
  *
  * @date   2009-09-26
  * @author jldupont
+ *
+ * DBus -->  Erlang
+ *
  */
 #include <stdlib.h>
 #include <pthread.h>
@@ -15,6 +18,7 @@ int IFilterCount=0;
 DBusBusType    IBusType;
 DBusConnection *IConn=NULL;
 
+//Prototypes
 static DBusHandlerResult ingress_filter_func (DBusConnection *connection,DBusMessage     *message,void            *user_data);
 void handle_message(DBusMessage *message, void *user_data);
 
