@@ -10,10 +10,6 @@
 
  #include "macros.h"
 
- EDBUS_BEGIN_DECLS
-
-	 void egress_init(DBusConnection *conn);
-
- EDBUS_END_DECLS
+ void egress_init(DBusConnection *conn);
 
 #endif /* EGRESS_H_ */
