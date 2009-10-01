@@ -56,6 +56,7 @@
 
  #include "macros.h"
  #include <stdlib.h>
+#include <stdarg.h>
  #include <pthread.h>
  #include <dbus/dbus.h>
  #include "epapi.h"

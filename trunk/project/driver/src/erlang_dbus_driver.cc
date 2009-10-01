@@ -77,31 +77,34 @@
  */
 int main(int argc, char **argv) {
 
-	  DBusConnection *connection;
-	  DBusError error;
-	  DBusBusType type = DBUS_BUS_SESSION;
-	  int noegress=FALSE;
-	  int noingress=FALSE;
+	DBGLOG(LOG_INFO, "start");
 
-	  int i = 0;
-	  for (i = 1; i < argc; i++) {
+	DBusConnection *connection;
+	DBusError error;
+	DBusBusType type = DBUS_BUS_SESSION;
+	int noegress=FALSE;
+	int noingress=FALSE;
 
-		  char *arg = argv[i];
+	int i = 0;
+	for (i = 1; i < argc; i++) {
 
-		  if (0==strcmp (arg, "--system"))
-			  type = DBUS_BUS_SYSTEM;
-		  else if (0==strcmp (arg, "--session"))
-			  type = DBUS_BUS_SESSION;
-		  else if (0==strcmp (arg, "--noegress"))
-			  noegress=TRUE;
-		  else if (0==strcmp (arg, "--noingress"))
-			  noingress=TRUE;
-		  else {
+	  char *arg = argv[i];
 
-			  // add filter
-			  ingress_add_filter(arg);
-		  }
+	  if (0==strcmp (arg, "--system"))
+		  type = DBUS_BUS_SYSTEM;
+	  else if (0==strcmp (arg, "--session"))
+		  type = DBUS_BUS_SESSION;
+	  else if (0==strcmp (arg, "--noegress"))
+		  noegress=TRUE;
+	  else if (0==strcmp (arg, "--noingress"))
+		  noingress=TRUE;
+	  else {
+
+		  // add filter
+		  DBGLOG(LOG_INFO, "adding filter: %s", arg);
+		  ingress_add_filter(arg);
 	  }
+	}
 
 	  dbus_error_init (&error);
 

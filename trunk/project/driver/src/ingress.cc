@@ -241,7 +241,7 @@ char *ingress_translate_type(int type) {
 		result=str_DBUS_MESSAGE_TYPE_ERROR;
 	  break;
 	default:
-		DBGLOG(LOG_ERROR, "ingress_translate_type: unsupported type: %i", type);
+		DBGLOG(LOG_ERR, "ingress_translate_type: unsupported type: %i", type);
 	  break;
 	}
 	  return result;
@@ -279,7 +279,7 @@ ingress_do_iter(TermHandler *th,
 		dbus_message_iter_get_basic (iter, &val);
 		result=ingress_encode_string(th, val);
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding string");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding string");
 		DBGEND
 		break;
 	  }
@@ -289,7 +289,7 @@ ingress_do_iter(TermHandler *th,
 		dbus_message_iter_get_basic (iter, &val);
 		result=ingress_encode_sig(th, val);
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding signature");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding signature");
 		DBGEND
 		break;
 	  }
@@ -299,7 +299,7 @@ ingress_do_iter(TermHandler *th,
 		dbus_message_iter_get_basic (iter, &val);
 		result=ingress_encode_op(th, val);
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding Object Path");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding Object Path");
 		DBGEND
 		break;
 	  }
@@ -313,7 +313,7 @@ ingress_do_iter(TermHandler *th,
 			result=th->append(&ts);
 		}
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding INT16");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding INT16");
 		DBGEND
 		break;
 	  }
@@ -327,7 +327,7 @@ ingress_do_iter(TermHandler *th,
 			result=th->append(&ts);
 		}
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding UINT16");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding UINT16");
 		DBGEND
 		break;
 	  }
@@ -341,7 +341,7 @@ ingress_do_iter(TermHandler *th,
 			result=th->append(&ts);
 		}
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding INT32");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding INT32");
 		DBGEND
 		break;
 	  }
@@ -355,7 +355,7 @@ ingress_do_iter(TermHandler *th,
 			result=th->append(&ts);
 		}
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding UINT32");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding UINT32");
 		DBGEND
 		break;
 	  }
@@ -369,7 +369,7 @@ ingress_do_iter(TermHandler *th,
 			result=th->append(&ts);
 		}
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding INT64");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding INT64");
 		DBGEND
 		break;
 	  }
@@ -383,7 +383,7 @@ ingress_do_iter(TermHandler *th,
 			result=th->append(&ts);
 		}
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding UINT64");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding UINT64");
 		DBGEND
 		break;
 	  }
@@ -397,7 +397,7 @@ ingress_do_iter(TermHandler *th,
 			result=th->append(&ts);
 		}
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding DOUBLE");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding DOUBLE");
 		DBGEND
 		break;
 	  }
@@ -411,7 +411,7 @@ ingress_do_iter(TermHandler *th,
 			result=th->append(&ts);
 		}
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding BYTE");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding BYTE");
 		DBGEND
 		break;
 	  }
@@ -425,7 +425,7 @@ ingress_do_iter(TermHandler *th,
 			result=th->append(&ts);
 		}
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding BOOLEAN");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding BOOLEAN");
 		DBGEND
 		break;
 	  }
@@ -445,7 +445,7 @@ ingress_do_iter(TermHandler *th,
 			}
 		}
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding VARIANT");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding VARIANT");
 		DBGEND
 		break;
 	  }
@@ -487,7 +487,7 @@ ingress_do_iter(TermHandler *th,
 			}
 		}
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding ARRAY");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding ARRAY");
 		DBGEND
 		break;
 	  }
@@ -514,7 +514,7 @@ ingress_do_iter(TermHandler *th,
 			}
 		}
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding DICT");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding DICT");
 		DBGEND
 		break;
 	  }
@@ -555,13 +555,13 @@ ingress_do_iter(TermHandler *th,
 			}
 		}
 		DBGBEGIN
-		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding STRUCT");
+		if (result) DBGLOG(LOG_ERR, DMSG, "encoding STRUCT");
 		DBGEND
 		break;
 	  }
 
 	  default:
-		  DBGLOG(LOG_ERROR, "ingress_do_iter: unknown type: %i", type);
+		  DBGLOG(LOG_ERR, "ingress_do_iter: unknown type: %i", type);
 		  code=I_UNSUPPORTED_TYPE;
 		  result=1;
 		  break;
