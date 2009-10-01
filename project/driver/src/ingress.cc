@@ -6,27 +6,6 @@
  *
  * DBus -->  Erlang
  *
- * METHOD & SIGNAL:
- * 		[m|s, Serial, Sender, Destination, Path, Interface, Member, [Message]]
- *
- * METHOD RETURN:
- * 		[r,   Serial, Sender, Destination, [Message]]
- *
- * ERROR:
- * 		[e,   Serial, Sender, Destination, Name, [Message]]
- *
- * where
- * 	Type=         atom()
- * 	Serial=       int()      % unsigned int
- *  Sender=       string()
- *  Destination=  string()
- *  Path=         string()
- *  Interface=    string()
- *  Member=       string()
- *  Message=      term()
- *
- * tuple size: 9
- *
  */
 #include "erlang_dbus_driver.h"
 #include "ingress.h"
@@ -36,7 +15,8 @@
 
 enum {
 	I_OK = 0,
-	I_UNSUPPORTED_TYPE
+	I_UNSUPPORTED_TYPE,
+	I_ENCODE_ERROR
 };
 
 
@@ -51,7 +31,6 @@ static char str_DBUS_MESSAGE_TYPE_ERROR[]=         "e";
 // ==================
 char *IFilters[INGRESS_MAX_FILTERS+1];
 int IFilterCount=0;
-DBusBusType    IBusType;
 DBusConnection *IConn=NULL;
 
 
@@ -59,7 +38,7 @@ DBusConnection *IConn=NULL;
 // ==========
 static DBusHandlerResult ingress_filter_func (DBusConnection *connection,DBusMessage     *message,void            *user_data);
 void ingress_handle_message(DBusMessage *message, void *user_data);
-int ingress_do_iter(TermHandler *th,EDBusMessage *edmsg, DBusMessageIter *iter);
+int ingress_do_iter(TermHandler *th, DBusMessageIter *iter);
 int ingress_init_message(TermHandler *th, EDBusMessage *edmsg);
 char *ingress_translate_type(int);
 
@@ -69,10 +48,6 @@ char *ingress_translate_type(int);
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 
-
-void ingress_set_bus(DBusBusType BusType) {
-	IBusType=BusType;
-}//
 
 
 void ingress_add_filter(char *filter) {
@@ -271,6 +246,338 @@ char *ingress_translate_type(int type) {
 	}
 	  return result;
 }
+int
+ingress_do_iter(TermHandler *th,
+				DBusMessageIter *iter) {
+
+	DBGBEGIN
+		const char DMSG[]= "ingress_do_iter: error: %s";
+	DBGEND
+
+	int code=I_OK; // assume everything OK
+	int result;
+	TermStruct ts;
+
+	do {
+	  int type = dbus_message_iter_get_arg_type (iter);
+
+	  code=I_OK;
+	  result=0;
+
+	  //hopefully this means we are finished
+	  if (DBUS_TYPE_INVALID == type)
+		  break;
+
+	  //if something happens, it will most
+	  //likely be an encoding error.
+	  code=I_ENCODE_ERROR;
+
+	  switch (type) {
+
+	  case DBUS_TYPE_STRING: {
+		char *val;
+		dbus_message_iter_get_basic (iter, &val);
+		result=ingress_encode_string(th, val);
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding string");
+		DBGEND
+		break;
+	  }
+
+	  case DBUS_TYPE_SIGNATURE: {
+		char *val;
+		dbus_message_iter_get_basic (iter, &val);
+		result=ingress_encode_sig(th, val);
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding signature");
+		DBGEND
+		break;
+	  }
+
+	  case DBUS_TYPE_OBJECT_PATH: {
+		char *val;
+		dbus_message_iter_get_basic (iter, &val);
+		result=ingress_encode_op(th, val);
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding Object Path");
+		DBGEND
+		break;
+	  }
+
+	  case DBUS_TYPE_INT16: {
+		dbus_int16_t val;
+		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "i16")) {
+			ts.type=TERMTYPE_LONG;
+			ts.Value.integer= val;
+			result=th->append(&ts);
+		}
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding INT16");
+		DBGEND
+		break;
+	  }
+
+	  case DBUS_TYPE_UINT16: {
+		dbus_uint16_t val;
+		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "ui16")) {
+			ts.type=TERMTYPE_ULONG;
+			ts.Value.uinteger= val;
+			result=th->append(&ts);
+		}
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding UINT16");
+		DBGEND
+		break;
+	  }
+
+	  case DBUS_TYPE_INT32: {
+		dbus_int32_t val;
+		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "i32")) {
+			ts.type=TERMTYPE_LONG;
+			ts.Value.integer= val;
+			result=th->append(&ts);
+		}
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding INT32");
+		DBGEND
+		break;
+	  }
+
+	  case DBUS_TYPE_UINT32: {
+		dbus_uint32_t val;
+		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "ui32")) {
+			ts.type=TERMTYPE_ULONG;
+			ts.Value.uinteger= val;
+			result=th->append(&ts);
+		}
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding UINT32");
+		DBGEND
+		break;
+	  }
+
+	  case DBUS_TYPE_INT64: {
+		dbus_int64_t val;
+		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "i64")) {
+			ts.type=TERMTYPE_LONGLONG;
+			ts.Value.linteger= val;
+			result=th->append(&ts);
+		}
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding INT64");
+		DBGEND
+		break;
+	  }
+
+	  case DBUS_TYPE_UINT64: {
+		dbus_uint64_t val;
+		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "ui64")) {
+			ts.type=TERMTYPE_ULONGLONG;
+			ts.Value.luinteger= val;
+			result=th->append(&ts);
+		}
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding UINT64");
+		DBGEND
+		break;
+	  }
+
+	  case DBUS_TYPE_DOUBLE: {
+		double val;
+		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "f")) {
+			ts.type=TERMTYPE_DOUBLE;
+			ts.Value.afloat= val;
+			result=th->append(&ts);
+		}
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding DOUBLE");
+		DBGEND
+		break;
+	  }
+
+	  case DBUS_TYPE_BYTE: {
+		unsigned char val;
+		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "by")) {
+			ts.type=TERMTYPE_ULONG;
+			ts.Value.integer= (unsigned long)val;
+			result=th->append(&ts);
+		}
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding BYTE");
+		DBGEND
+		break;
+	  }
+
+	  case DBUS_TYPE_BOOLEAN: {
+		dbus_bool_t val;
+		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "bo")) {
+			ts.type=TERMTYPE_ULONG;
+			ts.Value.integer= (unsigned long)val;
+			result=th->append(&ts);
+		}
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding BOOLEAN");
+		DBGEND
+		break;
+	  }
+
+	  case DBUS_TYPE_VARIANT: {
+		ts.type=TERMTYPE_START_TUPLE;
+		ts.size=2;
+		result=th->append(&ts);
+		if (!result) {
+			ts.type=TERMTYPE_ATOM;
+			ts.Value.string= (void *) "var";
+			result=th->append(&ts);
+			if (!result) {
+				DBusMessageIter subiter;
+				dbus_message_iter_recurse (iter, &subiter);
+				result=ingress_do_iter(th, &subiter);
+			}
+		}
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding VARIANT");
+		DBGEND
+		break;
+	  }
+	  case DBUS_TYPE_ARRAY: {
+		int current_type;
+		DBusMessageIter subiter;
+
+		ts.type=TERMTYPE_START_TUPLE;
+		ts.size=2;
+		result=th->append(&ts);
+		if (!result) {
+			ts.type=TERMTYPE_ATOM;
+			ts.Value.string= (void *) "arr";
+			result=th->append(&ts);
+			if (!result) {
+
+				ts.type=TERMTYPE_START_LIST;
+				ts.size=1;
+				result=th->append(&ts);
+				if (!result) {
+
+					dbus_message_iter_recurse (iter, &subiter);
+
+					while ((current_type = dbus_message_iter_get_arg_type (&subiter)) != DBUS_TYPE_INVALID) {
+
+						dbus_message_iter_next (&subiter);
+						result=ingress_do_iter(th, &subiter);
+						if (result)
+							break;
+
+						if (dbus_message_iter_get_arg_type (&subiter) == DBUS_TYPE_INVALID)
+						  break;
+					}//while
+					if (!result) {
+						ts.type=TERMTYPE_END_LIST;
+						result=th->append(&ts);
+					}
+				}
+			}
+		}
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding ARRAY");
+		DBGEND
+		break;
+	  }
+	  case DBUS_TYPE_DICT_ENTRY: {
+		DBusMessageIter subiter;
+
+		dbus_message_iter_recurse (iter, &subiter);
+
+		ts.type=TERMTYPE_START_TUPLE;
+		ts.size=3;
+		result=th->append(&ts);
+		if (!result) {
+
+			ts.type=TERMTYPE_ATOM;
+			ts.Value.string= (void *) "dic";
+			result=th->append(&ts);
+			if (!result) {
+
+				result=ingress_do_iter(th, &subiter);
+				if (!result) {
+					dbus_message_iter_next (&subiter);
+					result=ingress_do_iter(th, &subiter);
+				}
+			}
+		}
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding DICT");
+		DBGEND
+		break;
+	  }
+
+	  case DBUS_TYPE_STRUCT: {
+		int current_type;
+		DBusMessageIter subiter;
+
+		dbus_message_iter_recurse (iter, &subiter);
+
+		ts.type=TERMTYPE_START_TUPLE;
+		ts.size=2;
+		result=th->append(&ts);
+		if (!result) {
+
+			ts.type=TERMTYPE_ATOM;
+			ts.Value.string= (void *) "st";
+			result=th->append(&ts);
+			if (!result) {
+
+				ts.type=TERMTYPE_START_LIST;
+				ts.size=1;
+				result=th->append(&ts);
+				if (!result) {
+					while ((current_type = dbus_message_iter_get_arg_type (&subiter)) != DBUS_TYPE_INVALID) {
+
+						result=ingress_do_iter(th, &subiter);
+						if (!result)
+							break;
+
+						dbus_message_iter_next (&subiter);
+						if (dbus_message_iter_get_arg_type (&subiter) == DBUS_TYPE_INVALID)
+							break;
+					}//while
+					ts.type=TERMTYPE_END_LIST;
+					result=th->append(&ts);
+				}
+			}
+		}
+		DBGBEGIN
+		if (result) DBGLOG(LOG_ERROR, DMSG, "encoding STRUCT");
+		DBGEND
+		break;
+	  }
+
+	  default:
+		  DBGLOG(LOG_ERROR, "ingress_do_iter: unknown type: %i", type);
+		  code=I_UNSUPPORTED_TYPE;
+		  result=1;
+		  break;
+
+	  }//switch
+
+	} while (dbus_message_iter_next (iter) && (!result));
+
+	if (result)
+		return code;
+
+	return 0;
+}//
+
+
+
 /**
  *  Handle 'ingress' message coming on DBus
  *
@@ -329,230 +636,33 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 	}
 
 	dbus_message_iter_init (message, iter);
-	int result=ingress_do_iter(oth, edmsg, iter);
+	int result=ingress_do_iter(oth, iter);
+
+	//regardless of what happens, we do not need
+	//this object anymore
+	delete oth;
+
+	PktHandler *ph;
 
 	switch(result) {
 	case I_OK:
+		ph=new PktHandler();
+		result=ph->tx(opkt);
+		delete opkt;
+		delete ph;
+		if (result)
+			exit(EDBUS_SEND_ERROR);
 		break;
 
 	case I_UNSUPPORTED_TYPE:
-		break;
+		delete opkt;
+		exit(EDBUS_UNSUPPORTED_TYPE);
+
+	default:
+		// @TODO maybe try and send back an error term() ?
+		delete opkt;
+		exit(EDBUS_UNRECOVERABLE_ERROR);
 	}
-
-}//
-
-int
-ingress_do_iter(TermHandler *th,
-				EDBusMessage *edmsg,
-				DBusMessageIter *iter) {
-
-	int result=0; // assume everything OK
-	TermStruct ts;
-
-	do {
-	  int type = dbus_message_iter_get_arg_type (iter);
-
-	  //hopefully this means we are finished
-	  if (DBUS_TYPE_INVALID == type)
-		  break;
-
-
-	  switch (type) {
-
-	  case DBUS_TYPE_STRING: {
-		char *val;
-		dbus_message_iter_get_basic (iter, &val);
-		result=ingress_encode_string(th, val);
-		break;
-	  }
-
-	  case DBUS_TYPE_SIGNATURE: {
-		char *val;
-		dbus_message_iter_get_basic (iter, &val);
-		result=ingress_encode_sig(th, val);
-		break;
-	  }
-
-	  case DBUS_TYPE_OBJECT_PATH: {
-		char *val;
-		dbus_message_iter_get_basic (iter, &val);
-		result=ingress_encode_op(th, val);
-		break;
-	  }
-
-	  case DBUS_TYPE_INT16: {
-		dbus_int16_t val;
-		dbus_message_iter_get_basic (iter, &val);
-		if (!ingress_encode_tuple_start(th, "i16")) {
-			ts.type=TERMTYPE_LONG;
-			ts.Value.integer= val;
-			result=th->append(&ts);
-		}
-		break;
-	  }
-
-	  case DBUS_TYPE_UINT16: {
-		dbus_uint16_t val;
-		dbus_message_iter_get_basic (iter, &val);
-		if (!ingress_encode_tuple_start(th, "ui16")) {
-			ts.type=TERMTYPE_ULONG;
-			ts.Value.uinteger= val;
-			result=th->append(&ts);
-		}
-		break;
-	  }
-
-	  case DBUS_TYPE_INT32: {
-		dbus_int32_t val;
-		dbus_message_iter_get_basic (iter, &val);
-		if (!ingress_encode_tuple_start(th, "i32")) {
-			ts.type=TERMTYPE_LONG;
-			ts.Value.integer= val;
-			result=th->append(&ts);
-		}
-		break;
-	  }
-
-	  case DBUS_TYPE_UINT32: {
-		dbus_uint32_t val;
-		dbus_message_iter_get_basic (iter, &val);
-		if (!ingress_encode_tuple_start(th, "ui32")) {
-			ts.type=TERMTYPE_ULONG;
-			ts.Value.uinteger= val;
-			result=th->append(&ts);
-		}
-		break;
-	  }
-
-	  case DBUS_TYPE_INT64: {
-		dbus_int64_t val;
-		dbus_message_iter_get_basic (iter, &val);
-		if (!ingress_encode_tuple_start(th, "i64")) {
-			ts.type=TERMTYPE_LONGLONG;
-			ts.Value.linteger= val;
-			result=th->append(&ts);
-		}
-		break;
-	  }
-
-	  case DBUS_TYPE_UINT64: {
-		dbus_uint64_t val;
-		dbus_message_iter_get_basic (iter, &val);
-		if (!ingress_encode_tuple_start(th, "ui64")) {
-			ts.type=TERMTYPE_ULONGLONG;
-			ts.Value.luinteger= val;
-			result=th->append(&ts);
-		}
-		break;
-	  }
-
-	  case DBUS_TYPE_DOUBLE: {
-		double val;
-		dbus_message_iter_get_basic (iter, &val);
-		if (!ingress_encode_tuple_start(th, "f")) {
-			ts.type=TERMTYPE_DOUBLE;
-			ts.Value.afloat= val;
-			result=th->append(&ts);
-		}
-		break;
-	  }
-
-	  case DBUS_TYPE_BYTE: {
-		unsigned char val;
-		dbus_message_iter_get_basic (iter, &val);
-		if (!ingress_encode_tuple_start(th, "by")) {
-			ts.type=TERMTYPE_ULONG;
-			ts.Value.integer= (unsigned long)val;
-			result=th->append(&ts);
-		}
-		break;
-	  }
-
-	  case DBUS_TYPE_BOOLEAN: {
-		dbus_bool_t val;
-		dbus_message_iter_get_basic (iter, &val);
-		if (!ingress_encode_tuple_start(th, "bo")) {
-			ts.type=TERMTYPE_ULONG;
-			ts.Value.integer= (unsigned long)val;
-			result=th->append(&ts);
-		}
-		break;
-	  }
-
-	  case DBUS_TYPE_VARIANT: {
-		DBusMessageIter subiter;
-		dbus_message_iter_recurse (iter, &subiter);
-
-		printf ("variant ");
-
-		break;
-	  }
-	  case DBUS_TYPE_ARRAY: {
-		int current_type;
-		DBusMessageIter subiter;
-
-		dbus_message_iter_recurse (iter, &subiter);
-
-		printf("array [\n");
-		while ((current_type = dbus_message_iter_get_arg_type (&subiter)) != DBUS_TYPE_INVALID) {
-
-		dbus_message_iter_next (&subiter);
-
-		if (dbus_message_iter_get_arg_type (&subiter) != DBUS_TYPE_INVALID)
-		  printf (",");
-		  }
-		indent(depth);
-		printf("]\n");
-		break;
-	  }
-	  case DBUS_TYPE_DICT_ENTRY: {
-		DBusMessageIter subiter;
-
-		dbus_message_iter_recurse (iter, &subiter);
-
-		printf("dict entry(\n");
-		print_iter (&subiter, literal, depth+1);
-		dbus_message_iter_next (&subiter);
-		print_iter (&subiter, literal, depth+1);
-		indent(depth);
-		printf(")\n");
-		break;
-	  }
-
-	  case DBUS_TYPE_STRUCT: {
-		int current_type;
-		DBusMessageIter subiter;
-
-		dbus_message_iter_recurse (iter, &subiter);
-
-		printf("struct {\n");
-		while ((current_type = dbus_message_iter_get_arg_type (&subiter)) != DBUS_TYPE_INVALID)
-		  {
-		print_iter (&subiter, literal, depth+1);
-		dbus_message_iter_next (&subiter);
-		if (dbus_message_iter_get_arg_type (&subiter) != DBUS_TYPE_INVALID)
-		  printf (",");
-		  }
-		indent(depth);
-		printf("}\n");
-		break;
-	  }
-
-	  default:
-		  result=1;
-		  break;
-
-	  }//switch
-
-	} while (dbus_message_iter_next (iter));
-
-	if (result) {
-		// format an error term()
-	} else {
-
-	}
-
-	// send!
 
 }//
 
