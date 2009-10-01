@@ -277,6 +277,9 @@ ingress_do_iter(TermHandler *th,
 	  //likely be an encoding error.
 	  code=I_ENCODE_ERROR;
 
+	  // start another element in the list
+	  if (ingress_encode_start_list(th)) return 1;
+
 	  switch (type) {
 
 	  case DBUS_TYPE_STRING: {
@@ -436,6 +439,7 @@ ingress_do_iter(TermHandler *th,
 	  }
 
 	  case DBUS_TYPE_VARIANT: {
+
 		ts.type=TERMTYPE_START_TUPLE;
 		ts.size=2;
 		result=th->append(&ts);
@@ -466,12 +470,6 @@ ingress_do_iter(TermHandler *th,
 			ts.Value.string= (void *) "arr";
 			result=th->append(&ts);
 			if (!result) {
-
-				ts.type=TERMTYPE_START_LIST;
-				ts.size=1;
-				result=th->append(&ts);
-				if (!result) {
-
 					dbus_message_iter_recurse (iter, &subiter);
 
 					while ((current_type = dbus_message_iter_get_arg_type (&subiter)) != DBUS_TYPE_INVALID) {
@@ -481,14 +479,15 @@ ingress_do_iter(TermHandler *th,
 						if (result)
 							break;
 
-						if (dbus_message_iter_get_arg_type (&subiter) == DBUS_TYPE_INVALID)
-						  break;
+						if (dbus_message_iter_get_arg_type (&subiter) != DBUS_TYPE_INVALID) {
+							if (ingress_encode_start_list(th)) return 1;
+						}
+
 					}//while
 					if (!result) {
 						ts.type=TERMTYPE_END_LIST;
 						result=th->append(&ts);
 					}
-				}
 			}
 		}
 		DBGBEGIN
@@ -500,7 +499,6 @@ ingress_do_iter(TermHandler *th,
 		DBusMessageIter subiter;
 
 		dbus_message_iter_recurse (iter, &subiter);
-
 		ts.type=TERMTYPE_START_TUPLE;
 		ts.size=3;
 		result=th->append(&ts);
@@ -513,8 +511,15 @@ ingress_do_iter(TermHandler *th,
 
 				result=ingress_do_iter(th, &subiter);
 				if (!result) {
+
+					ts.type=TERMTYPE_END_LIST;
+					th->append(&ts);
+
 					dbus_message_iter_next (&subiter);
 					result=ingress_do_iter(th, &subiter);
+
+					ts.type=TERMTYPE_END_LIST;
+					th->append(&ts);
 				}
 			}
 		}
@@ -540,23 +545,20 @@ ingress_do_iter(TermHandler *th,
 			result=th->append(&ts);
 			if (!result) {
 
-				ts.type=TERMTYPE_START_LIST;
-				ts.size=1;
+				while ((current_type = dbus_message_iter_get_arg_type (&subiter)) != DBUS_TYPE_INVALID) {
+
+					result=ingress_do_iter(th, &subiter);
+					if (!result)
+						break;
+
+					dbus_message_iter_next (&subiter);
+					if (dbus_message_iter_get_arg_type (&subiter) != DBUS_TYPE_INVALID) {
+						if (ingress_encode_start_list(th)) return 1;
+					}
+
+				}//while
+				ts.type=TERMTYPE_END_LIST;
 				result=th->append(&ts);
-				if (!result) {
-					while ((current_type = dbus_message_iter_get_arg_type (&subiter)) != DBUS_TYPE_INVALID) {
-
-						result=ingress_do_iter(th, &subiter);
-						if (!result)
-							break;
-
-						dbus_message_iter_next (&subiter);
-						if (dbus_message_iter_get_arg_type (&subiter) == DBUS_TYPE_INVALID)
-							break;
-					}//while
-					ts.type=TERMTYPE_END_LIST;
-					result=th->append(&ts);
-				}
 			}
 		}
 		DBGBEGIN
@@ -665,6 +667,11 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 
 	dbus_message_iter_init (message, iter);
 	int result=ingress_do_iter(oth, iter);
+
+	TermStruct ts;
+	ts.type=TERMTYPE_END_LIST;
+	oth->append(&ts);
+
 
 	//regardless of what happens, we do not need
 	//this object anymore
