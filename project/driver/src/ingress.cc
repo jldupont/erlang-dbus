@@ -6,6 +6,15 @@
  *
  * DBus -->  Erlang
  *
+ * METHOD & SIGNAL:
+ * 		{dbus, m|s, Serial, Sender, Destination, Path, Interface, Member, [Message]}
+ *
+ * METHOD RETURN:
+ * 		{dbus, r,   Serial, Sender, Destination, [Message]}
+ *
+ * ERROR:
+ * 		{dbus, e,   Serial, Sender, Destination, Name, [Message]}
+ *
  */
 #include "erlang_dbus_driver.h"
 #include "ingress.h"
@@ -21,10 +30,10 @@ enum {
 
 // Constants
 // =========
-static char *str_DBUS_MESSAGE_TYPE_METHOD_CALL=   "m";
-static char *str_DBUS_MESSAGE_TYPE_SIGNAL=        "s";
-static char *str_DBUS_MESSAGE_TYPE_METHOD_RETURN= "r";
-static char *str_DBUS_MESSAGE_TYPE_ERROR=         "e";
+static char str_DBUS_MESSAGE_TYPE_METHOD_CALL[]=   "m";
+static char str_DBUS_MESSAGE_TYPE_SIGNAL[]=        "s";
+static char str_DBUS_MESSAGE_TYPE_METHOD_RETURN[]= "r";
+static char str_DBUS_MESSAGE_TYPE_ERROR[]=         "e";
 
 // "Local" variables
 // ==================
@@ -90,7 +99,7 @@ ingress_filter_func (DBusConnection *connection,
 					DBusMessage     *message,
 					void            *user_data)
 {
-  handle_message(message, user_data);
+  ingress_handle_message(message, user_data);
 
   if (dbus_message_is_signal (message,
                               DBUS_INTERFACE_LOCAL,
@@ -117,6 +126,7 @@ char *ingress_translate_type(int type) {
 		result=str_DBUS_MESSAGE_TYPE_ERROR;
 	  break;
 	default:
+		DBGLOG(LOG_ERROR, "ingress_translate_type: unsupported type: %i", type);
 	  break;
 	}
 	  return result;
@@ -193,7 +203,7 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
  *
  * where
  * 	Type=         atom()
- * 	Serial=       int()
+ * 	Serial=       int()      % unsigned int
  *  Sender=       string()
  *  Destination=  string()
  *  Path=         string()
@@ -205,11 +215,10 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
  */
 int
 ingress_init_message(TermHandler *th, EDBusMessage *edmsg) {
-	static char *dbus="dbus";
+	static char dbus[]="dbus";
+	int result;
 
 	TermStruct ts;
-
-
 
 	// {
 	ts.type=TERMTYPE_START_TUPLE;
@@ -221,8 +230,54 @@ ingress_init_message(TermHandler *th, EDBusMessage *edmsg) {
 	ts.Value.string=dbus;
 	result=th->append(&ts); if (result) return 1;
 
+	// {dbus, Type
+	char *type=ingress_translate_type(edmsg->type);
+	if (NULL==type) return 1;
+	ts.Value.string=type;
+	result=th->append(&ts); if (result) return 1;
 
-}
+	// {dbus, Type, Serial
+	ts.type=TERMTYPE_LONG;
+	ts.Value.uinteger=(unsigned long) edmsg->serial;
+	result=th->append(&ts); if (result) return 1;
+
+	// {dbus, Type, Serial, Sender
+	ts.type=TERMTYPE_STRING;
+	ts.Value.string=(void *) edmsg->sender;
+	result=th->append(&ts); if (result) return 1;
+
+	// {dbus, Type, Serial, Sender, Destination
+	ts.type=TERMTYPE_STRING;
+	ts.Value.string=(void *) edmsg->dest;
+	result=th->append(&ts); if (result) return 1;
+
+	switch(edmsg->type) {
+	case DBUS_MESSAGE_TYPE_METHOD_CALL:
+	case DBUS_MESSAGE_TYPE_SIGNAL:
+		// {dbus, Type, Serial, Sender, Destination, Path, Interface, Member
+		ts.type=TERMTYPE_STRING;
+		ts.Value.string=(void *) edmsg->Method_Signal.path;
+		result=th->append(&ts); if (result) return 1;
+
+		ts.type=TERMTYPE_STRING;
+		ts.Value.string=(void *) edmsg->Method_Signal.interface;
+		result=th->append(&ts); if (result) return 1;
+
+		ts.type=TERMTYPE_STRING;
+		ts.Value.string=(void *) edmsg->Method_Signal.member;
+		result=th->append(&ts); if (result) return 1;
+		break;
+	case DBUS_MESSAGE_TYPE_METHOD_RETURN:
+		break;
+
+	case DBUS_MESSAGE_TYPE_ERROR:
+		ts.type=TERMTYPE_STRING;
+		ts.Value.string=(void *) edmsg->Error.name;
+		break;
+
+	}
+
+}//
 
 int
 ingress_do_iter(TermHandler *th,
