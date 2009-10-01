@@ -42,7 +42,7 @@
  *
  *   \subsection Term to Erlang Client
  *
- *   {msg, Type, Serial, Sender, Destination, Path, Interface, Member, Message}
+ *   {dbus, Type, Serial, Sender, Destination, Path, Interface, Member, Message}
  *
  *	 Type=atom()
  *	 Serial=int()
@@ -97,6 +97,8 @@ int main(int argc, char **argv) {
 		  else if (0==strcmp (arg, "--noingress"))
 			  noingress=TRUE;
 		  else {
+
+			  // add filter
 			  ingress_add_filter(arg);
 		  }
 	  }
