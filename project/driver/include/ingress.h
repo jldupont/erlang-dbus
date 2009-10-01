@@ -17,22 +17,23 @@
  void ingress_add_filter(char *filter);
   void ingress_init(DBusConnection *conn);
 
- typedef union _EDBusMessage {
+ typedef struct _EDBusMessage {
 		 int type;
 		 const char *sender;
 		 const char *dest;
 		 dbus_uint32_t serial;
+		 union {
+			 struct _Method_Signal {
+				 const char *path;
+				 const char *interface;
+				 const char *member;
+			 } Method_Signal;
 
-		 struct _Method_Signal {
-			 const char *path;
-			 const char *interface;
-			 const char *member;
-		 } Method_Signal;
-
-		 struct _Reply {} Reply;
-		 struct _Error {
-			 const char *name;
-		 } Error;
+			 struct _Reply {} Reply;
+			 struct _Error {
+				 const char *name;
+			 } Error;
+		 } Type;
 	 } EDBusMessage;
 
 
