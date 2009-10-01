@@ -191,9 +191,9 @@ ingress_init_message(TermHandler *th, EDBusMessage *edmsg) {
 	case DBUS_MESSAGE_TYPE_METHOD_CALL:
 	case DBUS_MESSAGE_TYPE_SIGNAL:
 		// [Type, Serial, {str, Sender}, {str,Destination}, {str,Path}, {str,Interface}, {str,Member}
-		if (ingress_encode_string(th, (char *) edmsg->Method_Signal.path)) return 1;
-		if (ingress_encode_string(th, (char *) edmsg->Method_Signal.interface)) return 1;
-		if (ingress_encode_string(th, (char *) edmsg->Method_Signal.member)) return 1;
+		if (ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.path)) return 1;
+		if (ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.interface)) return 1;
+		if (ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.member)) return 1;
 		break;
 
 	case DBUS_MESSAGE_TYPE_METHOD_RETURN:
@@ -201,7 +201,7 @@ ingress_init_message(TermHandler *th, EDBusMessage *edmsg) {
 		break;
 
 	case DBUS_MESSAGE_TYPE_ERROR:
-		if (ingress_encode_string(th, (char *) edmsg->Error.name)) return 1;
+		if (ingress_encode_string(th, (char *) edmsg->Type.Error.name)) return 1;
 		break;
 
 	}
@@ -606,9 +606,9 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 	  case DBUS_MESSAGE_TYPE_METHOD_CALL:
 	  case DBUS_MESSAGE_TYPE_SIGNAL:
 		  edmsg->serial = dbus_message_get_serial (message);
-		  edmsg->Method_Signal.path = dbus_message_get_path (message);
-		  edmsg->Method_Signal.interface = dbus_message_get_interface (message);
-		  edmsg->Method_Signal.member = dbus_message_get_member (message);
+		  edmsg->Type.Method_Signal.path = dbus_message_get_path (message);
+		  edmsg->Type.Method_Signal.interface = dbus_message_get_interface (message);
+		  edmsg->Type.Method_Signal.member = dbus_message_get_member (message);
 		  break;
 
 	case DBUS_MESSAGE_TYPE_METHOD_RETURN:
@@ -617,7 +617,7 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 
 	case DBUS_MESSAGE_TYPE_ERROR:
 		edmsg->serial = dbus_message_get_reply_serial (message);
-		edmsg->Error.name = dbus_message_get_error_name (message);
+		edmsg->Type.Error.name = dbus_message_get_error_name (message);
 		break;
 
 	default:
