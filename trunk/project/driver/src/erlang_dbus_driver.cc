@@ -89,9 +89,9 @@ int main(int argc, char **argv) {
 		  char *arg = argv[i];
 
 		  if (0==strcmp (arg, "--system"))
-			  ingress_set_bus(DBUS_BUS_SYSTEM);
+			  type = DBUS_BUS_SYSTEM;
 		  else if (0==strcmp (arg, "--session"))
-			  ingress_set_bus(DBUS_BUS_SESSION);
+			  type = DBUS_BUS_SESSION;
 		  else if (0==strcmp (arg, "--noegress"))
 			  noegress=TRUE;
 		  else if (0==strcmp (arg, "--noingress"))
@@ -113,9 +113,9 @@ int main(int argc, char **argv) {
 	/*
 	 * Start 'egress' thread (if required)
 	 */
-	  if (FALSE==noegress) {
-		  egress_init(connection);
-	  }
+	  //if (FALSE==noegress) {
+	//	  egress_init(connection);
+	  //}
 
 
 	/*
