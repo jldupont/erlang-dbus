@@ -7,11 +7,9 @@
  * DBus -->  Erlang
  *
  */
-#include <stdlib.h>
-#include <pthread.h>
-#include <dbus/dbus.h>
-#include "ingress.h"
 #include "erlang_dbus_driver.h"
+#include "ingress.h"
+
 
 char *IFilters[INGRESS_MAX_FILTERS+1];
 int IFilterCount=0;
@@ -21,6 +19,8 @@ DBusConnection *IConn=NULL;
 //Prototypes
 static DBusHandlerResult ingress_filter_func (DBusConnection *connection,DBusMessage     *message,void            *user_data);
 void handle_message(DBusMessage *message, void *user_data);
+void ingress_do_iter(DBusMessageIter *);
+
 
 
 void ingress_set_bus(DBusBusType BusType) {
@@ -49,13 +49,15 @@ void ingress_init(DBusConnection *connection) {
         dbus_bus_add_match (connection, IFilters[i], &error);
         if (dbus_error_is_set (&error)) {
             dbus_error_free (&error);
+            DBGLOG(LOG_ERR, "ingress_init: add_match error, msg: %s", error.message);
             exit (EDBUS_ADD_MATCH_ERROR);
         }
 	}
 
 	if (!dbus_connection_add_filter (connection, ingress_filter_func, NULL, NULL)) {
-	  exit (1);
+	  exit (EDBUS_ADD_FILTER_ERROR);
 	}
+
 }//
 
 static DBusHandlerResult
@@ -70,10 +72,6 @@ ingress_filter_func (DBusConnection *connection,
                               "Disconnected"))
     exit (EDBUS_DISCONNECTED);
 
-  /* Conceptually we want this to be
-   * DBUS_HANDLER_RESULT_NOT_YET_HANDLED, but this raises
-   * some problems.  See bug 1719.
-   */
   return DBUS_HANDLER_RESULT_HANDLED;
 }
 
@@ -84,7 +82,6 @@ ingress_filter_func (DBusConnection *connection,
 void
 handle_message(DBusMessage *message, void *user_data) {
 
-  DBusMessageIter iter;
   EDBusMessage edmsg;
 
   edmsg.type =   dbus_message_get_type (message);
@@ -114,9 +111,14 @@ handle_message(DBusMessage *message, void *user_data) {
 
   }
 
+  DBusMessageIter iter;
   dbus_message_iter_init (message, &iter);
-
-
+  ingress_do_iter(&iter);
 
 }//
+
+void
+ingress_do_iter(&iter) {
+
+}
 

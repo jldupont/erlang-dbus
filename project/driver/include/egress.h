@@ -8,8 +8,6 @@
 #ifndef EGRESS_H_
 #define EGRESS_H_
 
- #include "macros.h"
-
  void egress_init(DBusConnection *conn);
 
 #endif /* EGRESS_H_ */
