@@ -99,14 +99,11 @@ int main(int argc, char **argv) {
 	  else if (0==strcmp (arg, "--noingress"))
 		  noingress=TRUE;
 	  else {
-
 		  // add filter
 		  DBGLOG(LOG_INFO, "adding filter: %s", arg);
 		  ingress_add_filter(arg);
 	  }
 	}
-
-	//ingress_add_filter("type='signal'");
 
 	  dbus_error_init (&error);
 
