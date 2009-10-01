@@ -182,8 +182,24 @@ ingress_encode_op(TermHandler *th, char *string) {
 }
 
 int
+ingress_encode_tuple_start(TermHandler *th, const char *type_atom) {
+	TermStruct ts;
+	int result=1;
+
+	ts.type=TERMTYPE_START_TUPLE;
+	ts.size=2;
+	if (!th->append(&ts)) {
+
+		ts.type=TERMTYPE_ATOM;
+		ts.Value.string=(void *) type_atom;
+		result=th->append(&ts);
+	}
+
+	return result;
+}
+
+int
 ingress_init_message(TermHandler *th, EDBusMessage *edmsg) {
-	static char dbus[]="dbus";
 
 	int result=0; //positive
 
@@ -206,18 +222,18 @@ ingress_init_message(TermHandler *th, EDBusMessage *edmsg) {
 	if (th->append(&ts)) return 1;
 
 	// [Type, Serial, {str,Sender}
-	if (ingress_encode_string(ts, edmsg->sender)) return 1;
+	if (ingress_encode_string(th, (char *) edmsg->sender)) return 1;
 
 	// [Type, Serial, {str,Sender}, {str,Destination}
-	if (ingress_encode_string(ts, edmsg->dest)) return 1;
+	if (ingress_encode_string(th, (char *) edmsg->dest)) return 1;
 
 	switch(edmsg->type) {
 	case DBUS_MESSAGE_TYPE_METHOD_CALL:
 	case DBUS_MESSAGE_TYPE_SIGNAL:
 		// [Type, Serial, {str, Sender}, {str,Destination}, {str,Path}, {str,Interface}, {str,Member}
-		if (ingress_encode_string(ts, edmsg->Method_Signal.path)) return 1;
-		if (ingress_encode_string(ts, edmsg->Method_Signal.interface)) return 1;
-		if (ingress_encode_string(ts, edmsg->Method_Signal.member)) return 1;
+		if (ingress_encode_string(th, (char *) edmsg->Method_Signal.path)) return 1;
+		if (ingress_encode_string(th, (char *) edmsg->Method_Signal.interface)) return 1;
+		if (ingress_encode_string(th, (char *) edmsg->Method_Signal.member)) return 1;
 		break;
 
 	case DBUS_MESSAGE_TYPE_METHOD_RETURN:
@@ -225,7 +241,7 @@ ingress_init_message(TermHandler *th, EDBusMessage *edmsg) {
 		break;
 
 	case DBUS_MESSAGE_TYPE_ERROR:
-		if (ingress_encode_string(ts, edmsg->Error.name)) return 1;
+		if (ingress_encode_string(th, (char *) edmsg->Error.name)) return 1;
 		break;
 
 	}
@@ -346,86 +362,129 @@ ingress_do_iter(TermHandler *th,
 	  case DBUS_TYPE_STRING: {
 		char *val;
 		dbus_message_iter_get_basic (iter, &val);
-		result=ingress_encode_string(ts, val);
+		result=ingress_encode_string(th, val);
 		break;
 	  }
 
 	  case DBUS_TYPE_SIGNATURE: {
 		char *val;
 		dbus_message_iter_get_basic (iter, &val);
-		result=ingress_encode_sig(ts, val);
+		result=ingress_encode_sig(th, val);
 		break;
 	  }
 
 	  case DBUS_TYPE_OBJECT_PATH: {
 		char *val;
 		dbus_message_iter_get_basic (iter, &val);
-		result=ingress_encode_op(ts, val);
+		result=ingress_encode_op(th, val);
 		break;
 	  }
 
 	  case DBUS_TYPE_INT16: {
 		dbus_int16_t val;
 		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "i16")) {
+			ts.type=TERMTYPE_LONG;
+			ts.Value.integer= val;
+			result=th->append(&ts);
+		}
 		break;
 	  }
 
 	  case DBUS_TYPE_UINT16: {
 		dbus_uint16_t val;
 		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "ui16")) {
+			ts.type=TERMTYPE_ULONG;
+			ts.Value.uinteger= val;
+			result=th->append(&ts);
+		}
 		break;
 	  }
 
 	  case DBUS_TYPE_INT32: {
 		dbus_int32_t val;
 		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "i32")) {
+			ts.type=TERMTYPE_LONG;
+			ts.Value.integer= val;
+			result=th->append(&ts);
+		}
 		break;
 	  }
 
 	  case DBUS_TYPE_UINT32: {
 		dbus_uint32_t val;
 		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "ui32")) {
+			ts.type=TERMTYPE_ULONG;
+			ts.Value.uinteger= val;
+			result=th->append(&ts);
+		}
 		break;
 	  }
 
 	  case DBUS_TYPE_INT64: {
 		dbus_int64_t val;
 		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "i64")) {
+			ts.type=TERMTYPE_LONGLONG;
+			ts.Value.linteger= val;
+			result=th->append(&ts);
+		}
 		break;
 	  }
 
 	  case DBUS_TYPE_UINT64: {
 		dbus_uint64_t val;
 		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "ui64")) {
+			ts.type=TERMTYPE_ULONGLONG;
+			ts.Value.luinteger= val;
+			result=th->append(&ts);
+		}
 		break;
 	  }
 
 	  case DBUS_TYPE_DOUBLE: {
 		double val;
 		dbus_message_iter_get_basic (iter, &val);
-		printf ("double %g\n", val);
+		if (!ingress_encode_tuple_start(th, "f")) {
+			ts.type=TERMTYPE_DOUBLE;
+			ts.Value.afloat= val;
+			result=th->append(&ts);
+		}
 		break;
 	  }
 
 	  case DBUS_TYPE_BYTE: {
 		unsigned char val;
 		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "by")) {
+			ts.type=TERMTYPE_ULONG;
+			ts.Value.integer= (unsigned long)val;
+			result=th->append(&ts);
+		}
 		break;
 	  }
 
 	  case DBUS_TYPE_BOOLEAN: {
 		dbus_bool_t val;
 		dbus_message_iter_get_basic (iter, &val);
+		if (!ingress_encode_tuple_start(th, "bo")) {
+			ts.type=TERMTYPE_ULONG;
+			ts.Value.integer= (unsigned long)val;
+			result=th->append(&ts);
+		}
 		break;
 	  }
 
 	  case DBUS_TYPE_VARIANT: {
 		DBusMessageIter subiter;
-
 		dbus_message_iter_recurse (iter, &subiter);
 
 		printf ("variant ");
-		print_iter (&subiter, literal, depth+1);
+
 		break;
 	  }
 	  case DBUS_TYPE_ARRAY: {
@@ -436,7 +495,7 @@ ingress_do_iter(TermHandler *th,
 
 		printf("array [\n");
 		while ((current_type = dbus_message_iter_get_arg_type (&subiter)) != DBUS_TYPE_INVALID) {
-		print_iter (&subiter, literal, depth+1);
+
 		dbus_message_iter_next (&subiter);
 
 		if (dbus_message_iter_get_arg_type (&subiter) != DBUS_TYPE_INVALID)
