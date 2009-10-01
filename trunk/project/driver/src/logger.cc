@@ -4,7 +4,9 @@
  * @date   2009-09-30
  * @author jldupont
  */
-
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdarg.h>
 #include "macros.h"
 
 

@@ -106,12 +106,16 @@ int main(int argc, char **argv) {
 	  }
 	}
 
+	//ingress_add_filter("type='signal'");
+
 	  dbus_error_init (&error);
 
 	  connection = dbus_bus_get (type, &error);
 	  if (NULL==connection) {
 		  exit(EDBUS_CONN_ERROR);
 	  }
+
+	  DBGLOG(LOG_INFO, "main, conn: %i", connection);
 
 	/*
 	 * Start 'egress' thread (if required)

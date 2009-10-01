@@ -36,7 +36,7 @@ DBusConnection *IConn=NULL;
 
 // Prototypes
 // ==========
-static DBusHandlerResult ingress_filter_func (DBusConnection *connection,DBusMessage     *message,void            *user_data);
+DBusHandlerResult ingress_filter_func (DBusConnection *connection,DBusMessage     *message,void            *user_data);
 void ingress_handle_message(DBusMessage *message, void *user_data);
 int ingress_do_iter(TermHandler *th, DBusMessageIter *iter);
 int ingress_init_message(TermHandler *th, EDBusMessage *edmsg);
@@ -80,21 +80,6 @@ void ingress_init(DBusConnection *connection) {
 	}
 
 }//
-
-static DBusHandlerResult
-ingress_filter_func (DBusConnection *connection,
-					DBusMessage     *message,
-					void            *user_data)
-{
-  ingress_handle_message(message, user_data);
-
-  if (dbus_message_is_signal (message,
-                              DBUS_INTERFACE_LOCAL,
-                              "Disconnected"))
-    exit (EDBUS_DISCONNECTED);
-
-  return DBUS_HANDLER_RESULT_HANDLED;
-}
 
 int
 ingress_encode_string(TermHandler *th, char *string) {
@@ -578,12 +563,32 @@ ingress_do_iter(TermHandler *th,
 
 
 
+DBusHandlerResult
+ingress_filter_func (DBusConnection *connection,
+					DBusMessage     *message,
+					void            *user_data)
+{
+	DBGLOG(LOG_INFO, "ingress_filter_func, conn: %i  message: %i", connection, message);
+
+	ingress_handle_message(message, user_data);
+
+	if (dbus_message_is_signal (message,
+							  DBUS_INTERFACE_LOCAL,
+							  "Disconnected"))
+	exit (EDBUS_DISCONNECTED);
+
+	return DBUS_HANDLER_RESULT_HANDLED;
+}
+
+
 /**
  *  Handle 'ingress' message coming on DBus
  *
  */
 void
 ingress_handle_message(DBusMessage *message, void *user_data) {
+
+	DBGLOG(LOG_INFO, "ingress_handle_message, message: %i", message);
 
 	// if these malloc don't go through,
 	// there are much bigger problems about the host
@@ -616,7 +621,8 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 		break;
 
 	default:
-	  break;
+		DBGLOG(LOG_ERR, "ingress_handle_message: unknown type: %i", edmsg->type);
+		break;
 
   }
 
