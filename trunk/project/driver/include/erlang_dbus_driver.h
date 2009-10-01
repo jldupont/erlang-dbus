@@ -12,6 +12,7 @@
  #include <stdlib.h>
  #include <pthread.h>
  #include <dbus/dbus.h>
+ #include "epapi.h"
 
 	/**
 	 * Process Exit Codes
