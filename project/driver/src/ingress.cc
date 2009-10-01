@@ -83,6 +83,9 @@ void ingress_init(DBusConnection *connection) {
 
 int
 ingress_encode_string(TermHandler *th, char *string) {
+
+	DBGLOG(LOG_INFO, "ingress_encode_string: %s", string);
+
 	TermStruct ts;
 	int result;
 
@@ -95,7 +98,7 @@ ingress_encode_string(TermHandler *th, char *string) {
 	result=th->append(&ts); if (result) return 1;
 
 	ts.type=TERMTYPE_STRING;
-	ts.Value.string=(void *) string;
+	ts.Value.string=(void *) ((NULL==string) ? "":string);
 	result=th->append(&ts);
 
 	return result;
@@ -159,6 +162,15 @@ ingress_encode_tuple_start(TermHandler *th, const char *type_atom) {
 }
 
 int
+ingress_encode_start_list(TermHandler *th) {
+	TermStruct ts;
+
+	ts.type=TERMTYPE_START_LIST;
+	ts.size=1;
+	return th->append(&ts);
+}
+
+int
 ingress_init_message(TermHandler *th, EDBusMessage *edmsg) {
 
 	int result=0; //positive
@@ -166,41 +178,49 @@ ingress_init_message(TermHandler *th, EDBusMessage *edmsg) {
 	TermStruct ts;
 
 	// [
-	ts.type=TERMTYPE_START_LIST;
-	ts.size=1;
-	if (th->append(&ts)) return 1;
+	if (ingress_encode_start_list(th)) return 1;
 
 	// [Type
 	char *type=ingress_translate_type(edmsg->type);
 	if (NULL==type) return 1;
+	ts.type=TERMTYPE_STRING;
 	ts.Value.string=type;
 	if (th->append(&ts)) return 1;
 
+
 	// [Type, Serial
+	if (ingress_encode_start_list(th)) return 1;
 	ts.type=TERMTYPE_LONG;
 	ts.Value.uinteger=(unsigned long) edmsg->serial;
 	if (th->append(&ts)) return 1;
 
 	// [Type, Serial, {str,Sender}
+	if (ingress_encode_start_list(th)) return 1;
 	if (ingress_encode_string(th, (char *) edmsg->sender)) return 1;
 
 	// [Type, Serial, {str,Sender}, {str,Destination}
+	if (ingress_encode_start_list(th)) return 1;
 	if (ingress_encode_string(th, (char *) edmsg->dest)) return 1;
 
+
 	switch(edmsg->type) {
-	case DBUS_MESSAGE_TYPE_METHOD_CALL:
-	case DBUS_MESSAGE_TYPE_SIGNAL:
+	case DBUS_MESSAGE_TYPE_METHOD_CALL:   //1
+	case DBUS_MESSAGE_TYPE_SIGNAL:        //4
 		// [Type, Serial, {str, Sender}, {str,Destination}, {str,Path}, {str,Interface}, {str,Member}
+		if (ingress_encode_start_list(th)) return 1;
 		if (ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.path)) return 1;
+		if (ingress_encode_start_list(th)) return 1;
 		if (ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.interface)) return 1;
+		if (ingress_encode_start_list(th)) return 1;
 		if (ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.member)) return 1;
 		break;
 
-	case DBUS_MESSAGE_TYPE_METHOD_RETURN:
+	case DBUS_MESSAGE_TYPE_METHOD_RETURN: //2
 		result=0;
 		break;
 
-	case DBUS_MESSAGE_TYPE_ERROR:
+	case DBUS_MESSAGE_TYPE_ERROR:         //3
+		if (ingress_encode_start_list(th)) return 1;
 		if (ingress_encode_string(th, (char *) edmsg->Type.Error.name)) return 1;
 		break;
 
@@ -568,7 +588,7 @@ ingress_filter_func (DBusConnection *connection,
 					DBusMessage     *message,
 					void            *user_data)
 {
-	DBGLOG(LOG_INFO, "ingress_filter_func, conn: %i  message: %i", connection, message);
+	//DBGLOG(LOG_INFO, "ingress_filter_func, conn: %i  message: %i", connection, message);
 
 	ingress_handle_message(message, user_data);
 
@@ -588,7 +608,7 @@ ingress_filter_func (DBusConnection *connection,
 void
 ingress_handle_message(DBusMessage *message, void *user_data) {
 
-	DBGLOG(LOG_INFO, "ingress_handle_message, message: %i", message);
+	//DBGLOG(LOG_INFO, "ingress_handle_message, message: %i", message);
 
 	// if these malloc don't go through,
 	// there are much bigger problems about the host
@@ -601,6 +621,8 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
   edmsg->type =   dbus_message_get_type (message);
   edmsg->sender = dbus_message_get_sender (message);
   edmsg->dest =   dbus_message_get_destination (message);
+
+  DBGLOG(LOG_INFO, "ingress_handle_message, message type: %i", edmsg->type);
 
   switch(edmsg->type) {
 	  case DBUS_MESSAGE_TYPE_METHOD_CALL:
@@ -647,6 +669,8 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 	//regardless of what happens, we do not need
 	//this object anymore
 	delete oth;
+	free( edmsg );
+	free( iter );
 
 	PktHandler *ph;
 
