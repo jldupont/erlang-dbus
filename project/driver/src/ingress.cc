@@ -19,6 +19,13 @@ enum {
 };
 
 
+// Constants
+// =========
+static char *str_DBUS_MESSAGE_TYPE_METHOD_CALL=   "m";
+static char *str_DBUS_MESSAGE_TYPE_SIGNAL=        "s";
+static char *str_DBUS_MESSAGE_TYPE_METHOD_RETURN= "r";
+static char *str_DBUS_MESSAGE_TYPE_ERROR=         "e";
+
 // "Local" variables
 // ==================
 char *IFilters[INGRESS_MAX_FILTERS+1];
@@ -30,10 +37,10 @@ DBusConnection *IConn=NULL;
 // Prototypes
 // ==========
 static DBusHandlerResult ingress_filter_func (DBusConnection *connection,DBusMessage     *message,void            *user_data);
-void handle_message(DBusMessage *message, void *user_data);
+void ingress_handle_message(DBusMessage *message, void *user_data);
 int ingress_do_iter(TermHandler *th,EDBusMessage *edmsg, DBusMessageIter *iter);
 int ingress_init_message(TermHandler *th, EDBusMessage *edmsg);
-
+char *ingress_translate_type(int);
 
 
 
@@ -93,12 +100,33 @@ ingress_filter_func (DBusConnection *connection,
   return DBUS_HANDLER_RESULT_HANDLED;
 }
 
+char *ingress_translate_type(int type) {
+	char *result=NULL;
+
+	switch(type) {
+	case DBUS_MESSAGE_TYPE_METHOD_CALL:
+		result=str_DBUS_MESSAGE_TYPE_METHOD_CALL;
+	  break;
+	case DBUS_MESSAGE_TYPE_SIGNAL:
+		result=str_DBUS_MESSAGE_TYPE_SIGNAL;
+	  break;
+	case DBUS_MESSAGE_TYPE_METHOD_RETURN:
+		result=str_DBUS_MESSAGE_TYPE_METHOD_RETURN;
+	  break;
+	case DBUS_MESSAGE_TYPE_ERROR:
+		result=str_DBUS_MESSAGE_TYPE_ERROR;
+	  break;
+	default:
+	  break;
+	}
+	  return result;
+}
 /**
  *  Handle 'ingress' message coming on DBus
  *
  */
 void
-handle_message(DBusMessage *message, void *user_data) {
+ingress_handle_message(DBusMessage *message, void *user_data) {
 
 	// if these malloc don't go through,
 	// there are much bigger problems about the host
@@ -161,11 +189,38 @@ handle_message(DBusMessage *message, void *user_data) {
 }//
 
 /**
- * 	Format: {dbus, Type, Serial, Sender, Destination, Path, Interface, Member, Message}
+ * Format: {dbus, Type, Serial, Sender, Destination, Path, Interface, Member, Message}
+ *
+ * where
+ * 	Type=         atom()
+ * 	Serial=       int()
+ *  Sender=       string()
+ *  Destination=  string()
+ *  Path=         string()
+ *  Interface=    string()
+ *  Member=       string()
+ *  Message=      term()
+ *
+ * tuple size: 9
  */
 int
 ingress_init_message(TermHandler *th, EDBusMessage *edmsg) {
+	static char *dbus="dbus";
+
 	TermStruct ts;
+
+
+
+	// {
+	ts.type=TERMTYPE_START_TUPLE;
+	ts.size=9;
+	result=th->append(&ts); if (result) return 1;
+
+	// {dbus,
+	ts.type=TERMTYPE_ATOM;
+	ts.Value.string=dbus;
+	result=th->append(&ts); if (result) return 1;
+
 
 }
 
