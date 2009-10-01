@@ -23,6 +23,7 @@
 	#define EDBUS_DISCONNECTED     2
 	#define EDBUS_ADD_MATCH_ERROR  3
 	#define EDBUS_ADD_FILTER_ERROR 4
+	#define EDBUS_INIT_MESSAGE     5  // error initializing message back to Erlang
 
 
 
