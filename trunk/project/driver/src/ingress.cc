@@ -474,10 +474,11 @@ ingress_do_iter(TermHandler *th,
 
 					while ((current_type = dbus_message_iter_get_arg_type (&subiter)) != DBUS_TYPE_INVALID) {
 
-						dbus_message_iter_next (&subiter);
 						result=ingress_do_iter(th, &subiter);
 						if (result)
 							break;
+
+						dbus_message_iter_next (&subiter);
 
 						if (dbus_message_iter_get_arg_type (&subiter) != DBUS_TYPE_INVALID) {
 							if (ingress_encode_start_list(th)) return 1;
