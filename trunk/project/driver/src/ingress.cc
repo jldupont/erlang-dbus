@@ -6,6 +6,8 @@
  *
  * DBus -->  Erlang
  *
+ * NOTE: The "fail-fast" paradigm is applied.
+ *
  */
 #include "erlang_dbus_driver.h"
 #include "ingress.h"
@@ -26,6 +28,8 @@ static char str_DBUS_MESSAGE_TYPE_METHOD_CALL[]=   "m";
 static char str_DBUS_MESSAGE_TYPE_SIGNAL[]=        "s";
 static char str_DBUS_MESSAGE_TYPE_METHOD_RETURN[]= "r";
 static char str_DBUS_MESSAGE_TYPE_ERROR[]=         "e";
+
+
 
 // "Local" variables
 // ==================
@@ -81,84 +85,85 @@ void ingress_init(DBusConnection *connection) {
 
 }//
 
+/**
+ * Encodes a STRING as {str, String}
+ */
 int
 ingress_encode_string(TermHandler *th, char *string) {
 
-	DBGLOG(LOG_INFO, "ingress_encode_string: %s", string);
+	//DBGLOG(LOG_INFO, "ingress_encode_string: %s", string);
 
 	TermStruct ts;
-	int result;
 
 	ts.type=TERMTYPE_START_TUPLE;
 	ts.size=2;
-	result=th->append(&ts); if (result) return 1;
+	th->append(&ts);
 
 	ts.type=TERMTYPE_ATOM;
 	ts.Value.string=(void *) "str";
-	result=th->append(&ts); if (result) return 1;
+	th->append(&ts);
 
 	ts.type=TERMTYPE_STRING;
 	ts.Value.string=(void *) ((NULL==string) ? "":string);
-	result=th->append(&ts);
-
-	return result;
+	return th->append(&ts);
 }
 
+/**
+ * Encodes a SIGNATURE primitive as {sig, String}
+ */
 int
 ingress_encode_sig(TermHandler *th, char *string) {
+
 	TermStruct ts;
-	int result;
 
 	ts.type=TERMTYPE_START_TUPLE;
 	ts.size=2;
-	result=th->append(&ts); if (result) return 1;
+	th->append(&ts);
 
 	ts.type=TERMTYPE_ATOM;
 	ts.Value.string=(void *) "sig";
-	result=th->append(&ts); if (result) return 1;
+	th->append(&ts);
 
 	ts.type=TERMTYPE_STRING;
 	ts.Value.string=(void *) string;
-	result=th->append(&ts);
-
-	return result;
+	return th->append(&ts);
 }
 
+/**
+ * Encodes an OBJECT_PATH primitive as {op, String}
+ */
 int
 ingress_encode_op(TermHandler *th, char *string) {
 	TermStruct ts;
-	int result;
 
 	ts.type=TERMTYPE_START_TUPLE;
 	ts.size=2;
-	result=th->append(&ts); if (result) return 1;
+	th->append(&ts);
 
 	ts.type=TERMTYPE_ATOM;
 	ts.Value.string=(void *) "op";
-	result=th->append(&ts); if (result) return 1;
+	th->append(&ts);
 
 	ts.type=TERMTYPE_STRING;
 	ts.Value.string=(void *) string;
-	result=th->append(&ts);
-
-	return result;
+	return th->append(&ts);
 }
 
+/**
+ * Encodes the _start_ of a tuple as  {Atom,
+ * The rest of the tuple must be completed.
+ */
 int
 ingress_encode_tuple_start(TermHandler *th, const char *type_atom) {
 	TermStruct ts;
-	int result=1;
 
 	ts.type=TERMTYPE_START_TUPLE;
 	ts.size=2;
-	if (!th->append(&ts)) {
+	th->append(&ts);
 
-		ts.type=TERMTYPE_ATOM;
-		ts.Value.string=(void *) type_atom;
-		result=th->append(&ts);
-	}
-
-	return result;
+	ts.type=TERMTYPE_ATOM;
+	ts.Value.string=(void *) type_atom;
+	return th->append(&ts);
 }
 
 int
@@ -173,62 +178,59 @@ ingress_encode_start_list(TermHandler *th) {
 int
 ingress_init_message(TermHandler *th, EDBusMessage *edmsg) {
 
-	int result=0; //positive
-
 	TermStruct ts;
 
 	// [
-	if (ingress_encode_start_list(th)) return 1;
+	ingress_encode_start_list(th);
 
 	// [Type
 	char *type=ingress_translate_type(edmsg->type);
-	if (NULL==type) return 1;
 	ts.type=TERMTYPE_STRING;
 	ts.Value.string=type;
-	if (th->append(&ts)) return 1;
-
+	th->append(&ts);
 
 	// [Type, Serial
-	if (ingress_encode_start_list(th)) return 1;
+	ingress_encode_start_list(th);
 	ts.type=TERMTYPE_LONG;
 	ts.Value.uinteger=(unsigned long) edmsg->serial;
-	if (th->append(&ts)) return 1;
+	th->append(&ts);
 
 	// [Type, Serial, {str,Sender}
-	if (ingress_encode_start_list(th)) return 1;
-	if (ingress_encode_string(th, (char *) edmsg->sender)) return 1;
+	ingress_encode_start_list(th);
+	ingress_encode_string(th, (char *) edmsg->sender);
 
 	// [Type, Serial, {str,Sender}, {str,Destination}
-	if (ingress_encode_start_list(th)) return 1;
-	if (ingress_encode_string(th, (char *) edmsg->dest)) return 1;
-
+	ingress_encode_start_list(th);
+	ingress_encode_string(th, (char *) edmsg->dest);
 
 	switch(edmsg->type) {
 	case DBUS_MESSAGE_TYPE_METHOD_CALL:   //1
 	case DBUS_MESSAGE_TYPE_SIGNAL:        //4
 		// [Type, Serial, {str, Sender}, {str,Destination}, {str,Path}, {str,Interface}, {str,Member}
-		if (ingress_encode_start_list(th)) return 1;
-		if (ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.path)) return 1;
-		if (ingress_encode_start_list(th)) return 1;
-		if (ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.interface)) return 1;
-		if (ingress_encode_start_list(th)) return 1;
-		if (ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.member)) return 1;
+		ingress_encode_start_list(th);
+		ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.path);
+		ingress_encode_start_list(th);
+		ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.interface);
+		ingress_encode_start_list(th);
+		ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.member);
 		break;
 
 	case DBUS_MESSAGE_TYPE_METHOD_RETURN: //2
-		result=0;
 		break;
 
 	case DBUS_MESSAGE_TYPE_ERROR:         //3
-		if (ingress_encode_start_list(th)) return 1;
-		if (ingress_encode_string(th, (char *) edmsg->Type.Error.name)) return 1;
+		ingress_encode_start_list(th);
+		ingress_encode_string(th, (char *) edmsg->Type.Error.name);
 		break;
 
 	}
-	return result;
+	return 0;
 }//
 
-
+/**
+ * Translates the 'integer' based identifier for
+ * DBus message type to an atom() based one.
+ */
 char *ingress_translate_type(int type) {
 	char *result=NULL;
 
@@ -251,6 +253,10 @@ char *ingress_translate_type(int type) {
 	}
 	  return result;
 }
+
+/**
+ *  Recursive Message Iteration
+ */
 int
 ingress_do_iter(TermHandler *th,
 				DBusMessageIter *iter) {
@@ -278,7 +284,7 @@ ingress_do_iter(TermHandler *th,
 	  code=I_ENCODE_ERROR;
 
 	  // start another element in the list
-	  if (ingress_encode_start_list(th)) return 1;
+	  ingress_encode_start_list(th);
 
 	  switch (type) {
 
@@ -585,7 +591,9 @@ ingress_do_iter(TermHandler *th,
 }//
 
 
-
+/**
+ * Filter Function registered with DBus
+ */
 DBusHandlerResult
 ingress_filter_func (DBusConnection *connection,
 					DBusMessage     *message,
@@ -600,6 +608,7 @@ ingress_filter_func (DBusConnection *connection,
 							  "Disconnected"))
 	exit (EDBUS_DISCONNECTED);
 
+	// We are passing the message along to the Erlang Client...
 	return DBUS_HANDLER_RESULT_HANDLED;
 }
 
@@ -611,23 +620,20 @@ ingress_filter_func (DBusConnection *connection,
 void
 ingress_handle_message(DBusMessage *message, void *user_data) {
 
-	//DBGLOG(LOG_INFO, "ingress_handle_message, message: %i", message);
-
 	// if these malloc don't go through,
 	// there are much bigger problems about the host
 	// system looming anywas...
-  EDBusMessage   *edmsg=(EDBusMessage *)malloc(sizeof(EDBusMessage));
-  DBusMessageIter *iter=(DBusMessageIter *)malloc(sizeof(DBusMessageIter));
+	EDBusMessage   *edmsg=(EDBusMessage *)malloc(sizeof(EDBusMessage));
+	DBusMessageIter *iter=(DBusMessageIter *)malloc(sizeof(DBusMessageIter));
 
-  // Start the receive cycle
+	// Start the receive cycle
+	edmsg->type =   dbus_message_get_type (message);
+	edmsg->sender = dbus_message_get_sender (message);
+	edmsg->dest =   dbus_message_get_destination (message);
 
-  edmsg->type =   dbus_message_get_type (message);
-  edmsg->sender = dbus_message_get_sender (message);
-  edmsg->dest =   dbus_message_get_destination (message);
+	DBGLOG(LOG_INFO, "ingress_handle_message, message type: %i", edmsg->type);
 
-  DBGLOG(LOG_INFO, "ingress_handle_message, message type: %i", edmsg->type);
-
-  switch(edmsg->type) {
+	switch(edmsg->type) {
 	  case DBUS_MESSAGE_TYPE_METHOD_CALL:
 	  case DBUS_MESSAGE_TYPE_SIGNAL:
 		  edmsg->serial = dbus_message_get_serial (message);
@@ -638,7 +644,7 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 
 	case DBUS_MESSAGE_TYPE_METHOD_RETURN:
 		edmsg->serial = dbus_message_get_reply_serial (message);
-        break;
+		break;
 
 	case DBUS_MESSAGE_TYPE_ERROR:
 		edmsg->serial = dbus_message_get_reply_serial (message);
@@ -649,9 +655,10 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 		DBGLOG(LOG_ERR, "ingress_handle_message: unknown type: %i", edmsg->type);
 		break;
 
-  }
+	}
 
 	// Interface to Erlang
+	//  using EPAPI library
 	// ===================
 	Pkt         *opkt=new Pkt();
 	TermHandler  *oth=new TermHandler();
@@ -666,13 +673,14 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 		exit(EDBUS_INIT_MESSAGE);
 	}
 
+	// Iterate over the DBus message
 	dbus_message_iter_init (message, iter);
 	int result=ingress_do_iter(oth, iter);
 
+	// We need to properly close the Erlang term()
 	TermStruct ts;
 	ts.type=TERMTYPE_END_LIST;
 	oth->append(&ts);
-
 
 	//regardless of what happens, we do not need
 	//this object anymore
