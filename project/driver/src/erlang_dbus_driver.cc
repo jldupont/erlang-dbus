@@ -60,6 +60,12 @@
 #include "queue.h"
 
 
+// Prototypes
+// ==========
+int send_unique_name(const char *uniq_name);
+
+
+
 /**
  * Library entry point
  *
@@ -109,10 +115,29 @@ int main(int argc, char **argv) {
 
 	  connection = dbus_bus_get (type, &error);
 	  if (NULL==connection) {
+		  dbus_error_free (&error);
 		  exit(EDBUS_CONN_ERROR);
 	  }
 
 	  DBGLOG(LOG_INFO, "main, conn: %i", connection);
+
+	  // The following breaks big time!
+
+	  const char *uniq_name = dbus_bus_get_unique_name(connection);
+	  DBGLOG(LOG_INFO, "unique-name: %s", uniq_name);
+	  //paranoia
+	  if (NULL==uniq_name) {
+			exit(EDBUS_INVALID_UNIQUE_NAME);
+	  }
+
+	  // Before starting any thread or the main loop,
+	  // we need to inform the Erlang Client of our 'unique-name'
+	  // associated with the connection.
+	  if (send_unique_name(uniq_name)) {
+		  exit(EDBUS_ERROR_SENDING_UNIQ);
+	  }
+
+
 
 	/*
 	 * Start 'egress' thread (if required)
@@ -137,3 +162,35 @@ int main(int argc, char **argv) {
 
 	  exit (EDBUS_OK);
 }//
+
+int
+send_unique_name(const char *uniq_name) {
+
+	Pkt         *p =new Pkt();
+	PktHandler  *ph=new PktHandler();
+	TermHandler *th=new TermHandler();
+
+	th->init(p);
+
+	TermStruct ts;
+	ts.type=TERMTYPE_START_TUPLE;
+	ts.size=2;
+	th->append(&ts);
+
+	ts.type=TERMTYPE_ATOM;
+	ts.Value.string=(void *) "unique_name";
+	th->append(&ts);
+
+	ts.type=TERMTYPE_STRING;
+	ts.Value.string=(void *) uniq_name;
+	th->append(&ts);
+
+	int result=ph->tx(p);
+
+	delete p;
+	delete ph;
+	delete th;
+
+	return result;
+}//
+
