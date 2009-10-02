@@ -124,7 +124,10 @@ __egress_thread_function(void *conn) {
 		th->init(p);
 
 		r=egress_decode_header(th, &mh);
-		egress_handle_code(r);
+		if (r) {
+			DBGLOG(LOG_ERR, "egress thread: can't decode header");
+			exit(EDBUS_DECODE_HEADER_ERROR);
+		}
 
 		r=egress_iter(th);
 		egress_handle_code(r);    //this will exit if required
@@ -180,12 +183,11 @@ egress_handle_code(int code) {
 int
 egress_decode_header(TermHandler *th, MessageHeader *mh) {
 
-	int r;
 	TermStruct ts;
 
 	// First, we should be getting a "start list"
 	th->clean(&ts);
-	r=th->iter(&ts);
+	int r=th->iter(&ts);
 	if (r) {
 		DBGLOG(LOG_ERR, "egress_decode_header: expecting 'start list'");
 		return r;
@@ -208,6 +210,7 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 	}
 	mh->type=egress_translate_type((const char *) ts.Value.string);
 
+
 	// Next, we need the Serial info as an integer()
 	th->clean(&ts);
 	r=th->iter(&ts);
@@ -222,20 +225,40 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 
 	mh->serial = ts.Value.integer;
 
-	// Next, we need the Serial info as an integer()
+	// Next, we need the Sender info as an string()
 	th->clean(&ts);
 	r=th->iter(&ts);
 	if (r) {
-		DBGLOG(LOG_ERR, "egress_decode_header: expecting 'serial'");
+		DBGLOG(LOG_ERR, "egress_decode_header: expecting 'sender'");
 		return r;
 	}
-	if (TERMTYPE_LONG != ts.type) {
-		DBGLOG(LOG_ERR, "egress_decode_header: missing integer(serial)");
+	if (TERMTYPE_STRING != ts.type) {
+		DBGLOG(LOG_ERR, "egress_decode_header: missing string(sender)");
 		return r;
 	}
+	mh->sender = (const char *) ts.Value.string;
 
+	// we don't want to 'clean' this term struct because we have
+	// transferred ownership of the string onto the MessageHeader structure.
+	ts.Value.string=NULL;
 
+	// Next, we need the Destination info as an string()
+	r=th->iter(&ts);
+	if (r) {
+		DBGLOG(LOG_ERR, "egress_decode_header: expecting 'destination'");
+		return r;
+	}
+	if (TERMTYPE_STRING != ts.type) {
+		DBGLOG(LOG_ERR, "egress_decode_header: missing string(destination)");
+		return r;
+	}
+	mh->dest = (const char *) ts.Value.string;  // this can be NULL e.g. Signals
+	ts.Value.string=NULL;
+
+	// all went well!
+	return 0;
 }//
+
 
 
 int
