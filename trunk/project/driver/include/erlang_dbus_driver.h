@@ -10,7 +10,9 @@
  *
  * As the driver gets registered on the DBus and acquires a connection, a 'unique-name' is assigned
  * to the connection.  This 'unique-name' (e.g. ":1.1173") is useful for filtering incoming messages.
- * The 'unique-name' is forwarded to the Erlang Client through the following
+ * The 'unique-name' is forwarded to the Erlang Client through the following message:
+ *
+ * 	{uniq_name, string()}
  *
  * 	\subsection Types
  *
@@ -37,9 +39,9 @@
  *
  * 	\subsection DBus primitives & Compound Types
  *
- * 		\li STRING      ==> {str, String}
- * 		\li SIGNATURE   ==> {sig, String}
- * 		\li OBJECT PATH ==> {op,  String}
+ * 		\li STRING      ==> {str,  String}
+ * 		\li SIGNATURE   ==> {sig,  String}
+ * 		\li OBJECT PATH ==> {op,   String}
  *		\li INT16       ==> {i16,  Integer}
  *		\li UINT16      ==> {ui16, Integer}
  *		\li INT32       ==> {i32,  Integer}
@@ -49,10 +51,10 @@
  *		\li DOUBLE      ==> {f,    Float}
  *		\li BYTE        ==> {by,   Integer}
  *		\li BOOLEAN     ==> {bo,   Integer}
- *		\li VARIANT     ==> {var,  term() }
- *		\li ARRAY       ==> {arr,  [term()] }
- *		\li DICT_ENTRY  ==> {dic, term(), term() }
- *		\li STRUCT      ==> {st, [term()] }
+ *		\li VARIANT     ==> {v,    term() }
+ *		\li ARRAY       ==> {a,    [term()] }
+ *		\li DICT_ENTRY  ==> {d,    term(), term() }
+ *		\li STRUCT      ==> {st,   [term()] }
  */
 
 #ifndef ERLANG_DBUS_DRIVER_H_
