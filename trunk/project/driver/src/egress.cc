@@ -120,9 +120,11 @@ void *__egress_thread_function(void *conn);
 void egress_handle_code(int code);
 int  egress_translate_type(const char *type);
 int egress_decode_header(TermHandler *th, MessageHeader *mh);
-int egress_iter(TermIterator *ti, TermHandler *th, DBusMessage *dm);
+int egress_iter(TermIterator *ti, TermHandler *th, DBusMessageIter *iter);
 DBusMessage *egress_init_dbus_message(MessageHeader *mh);
 int egress_translate_etype(const char *tt);
+void egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt);
+int egress_decode_prim(TermHandler *th);
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -176,7 +178,10 @@ __egress_thread_function(void *conn) {
 		ti.state=TIS_START;
 
 		// start iterating & translating
-		r=egress_iter(&ti, th, dm);
+		DBusMessageIter iter;
+		dbus_message_iter_init_append (dm, &iter);
+
+		r=egress_iter(&ti, th, &iter);
 		egress_handle_code(r);    //this will exit if required
 
 		//recycle the packet
@@ -441,7 +446,7 @@ egress_init_dbus_message(MessageHeader *mh) {
  * @param tt DBUS_TYPE_xyz
  */
 void
-egress_append_prim(TermHandler *th, DBusMessage *dm, int tt) {
+egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
 
 	TermStruct ts;
 	int r=th->iter(&ts);
@@ -452,58 +457,113 @@ egress_append_prim(TermHandler *th, DBusMessage *dm, int tt) {
 
 	switch(tt) {
 	case DBUS_TYPE_BYTE: {
-		unsigned char b;
 		if (TERMTYPE_LONG==ts.type) {
 			unsigned char b = (unsigned char) ts.Value.integer;
 			dbus_message_iter_append_basic (iter, DBUS_TYPE_BYTE, &b);
+		} else {
+			DBGLOG(LOG_ERR, "egress_append_prim: expecting 'BYTE'");
+			exit(EDBUS_DECODE_ERROR);
 		}
 		break;
 	}
 	case DBUS_TYPE_DOUBLE: {
-		d = strtod (value, NULL);
-		dbus_message_iter_append_basic (iter, DBUS_TYPE_DOUBLE, &d);
+		if (TERMTYPE_DOUBLE==ts.type) {
+			double d = ts.Value.afloat;
+			dbus_message_iter_append_basic (iter, DBUS_TYPE_DOUBLE, &d);
+		} else {
+			DBGLOG(LOG_ERR, "egress_append_prim: expecting 'DOUBLE'");
+			exit(EDBUS_DECODE_ERROR);
+		}
 		break;
 	}
 	case DBUS_TYPE_INT16: {
-		int16 = strtol (value, NULL, 0);
-		dbus_message_iter_append_basic (iter, DBUS_TYPE_INT16, &int16);
+		if (TERMTYPE_LONG==ts.type) {
+			dbus_int16_t int16 = (dbus_int16_t) ts.Value.integer;
+			dbus_message_iter_append_basic (iter, DBUS_TYPE_INT16, &int16);
+		} else {
+			DBGLOG(LOG_ERR, "egress_append_prim: expecting 'INT16'");
+			exit(EDBUS_DECODE_ERROR);
+		}
 		break;
 	}
 	case DBUS_TYPE_UINT16: {
-		uint16 = strtoul (value, NULL, 0);
-		dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT16, &uint16);
+		if (TERMTYPE_ULONG==ts.type) {
+			dbus_uint16_t uint16 = (dbus_uint16_t) ts.Value.uinteger;
+			dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT16, &uint16);
+		} else {
+			DBGLOG(LOG_ERR, "egress_append_prim: expecting 'UINT16'");
+			exit(EDBUS_DECODE_ERROR);
+		}
 		break;
 	}
 	case DBUS_TYPE_INT32: {
-		int32 = strtol (value, NULL, 0);
-		dbus_message_iter_append_basic (iter, DBUS_TYPE_INT32, &int32);
+		if (TERMTYPE_LONG==ts.type) {
+			dbus_int32_t int32 = (dbus_int32_t) ts.Value.integer;
+			dbus_message_iter_append_basic (iter, DBUS_TYPE_INT32, &int32);
+		} else {
+			DBGLOG(LOG_ERR, "egress_append_prim: expecting 'INT32'");
+			exit(EDBUS_DECODE_ERROR);
+		}
 		break;
 	}
 	case DBUS_TYPE_UINT32: {
-		uint32 = strtoul (value, NULL, 0);
-		dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT32, &uint32);
+		if (TERMTYPE_ULONG==ts.type) {
+			dbus_uint32_t int32 = (dbus_uint32_t) ts.Value.uinteger;
+			dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT32, &int32);
+		} else {
+			DBGLOG(LOG_ERR, "egress_append_prim: expecting 'INT32'");
+			exit(EDBUS_DECODE_ERROR);
+		}
 		break;
 	}
 	case DBUS_TYPE_INT64: {
-		int64 = strtoll (value, NULL, 0);
-		dbus_message_iter_append_basic (iter, DBUS_TYPE_INT64, &int64);
+		if (TERMTYPE_LONGLONG==ts.type) {
+			dbus_int64_t uint64 = (dbus_int64_t) ts.Value.linteger;
+			dbus_message_iter_append_basic (iter, DBUS_TYPE_INT64, &uint64);
+		} else {
+			DBGLOG(LOG_ERR, "egress_append_prim: expecting 'INT64'");
+			exit(EDBUS_DECODE_ERROR);
+		}
 		break;
 	}
 	case DBUS_TYPE_UINT64: {
-		uint64 = strtoull (value, NULL, 0);
-		dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT64, &uint64);
+		if (TERMTYPE_ULONGLONG==ts.type) {
+			dbus_uint64_t int64 = (dbus_uint64_t) ts.Value.luinteger;
+			dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT64, &int64);
+		} else {
+			DBGLOG(LOG_ERR, "egress_append_prim: expecting 'UINT64'");
+			exit(EDBUS_DECODE_ERROR);
+		}
 		break;
 	}
 	case DBUS_TYPE_STRING: {
-		dbus_message_iter_append_basic (iter, DBUS_TYPE_STRING, &value);
+		if (TERMTYPE_STRING==ts.type) {
+			dbus_message_iter_append_basic (iter, DBUS_TYPE_STRING, &ts.Value.string);
+		} else {
+			DBGLOG(LOG_ERR, "egress_append_prim: expecting 'STRING'");
+			exit(EDBUS_DECODE_ERROR);
+		}
 		break;
+
 	}
 	case DBUS_TYPE_OBJECT_PATH: {
-		dbus_message_iter_append_basic (iter, DBUS_TYPE_OBJECT_PATH, &value);
+		if (TERMTYPE_STRING==ts.type) {
+			dbus_message_iter_append_basic (iter, DBUS_TYPE_OBJECT_PATH, &ts.Value.string);
+		} else {
+			DBGLOG(LOG_ERR, "egress_append_prim: expecting 'STRING'");
+			exit(EDBUS_DECODE_ERROR);
+		}
 		break;
 	}
 	case DBUS_TYPE_BOOLEAN: {
-
+		if (TERMTYPE_LONG==ts.type) {
+			dbus_bool_t b = (dbus_bool_t) ts.Value.integer;
+			dbus_message_iter_append_basic (iter, DBUS_TYPE_BOOLEAN, &b);
+		} else {
+			DBGLOG(LOG_ERR, "egress_append_prim: expecting 'BOOLEAN'");
+			exit(EDBUS_DECODE_ERROR);
+		}
+		break;
 	}
 	}//switch
 
@@ -518,7 +578,7 @@ egress_append_prim(TermHandler *th, DBusMessage *dm, int tt) {
  *
  */
 int
-egress_iter(TermIterator *ti, TermHandler *th, DBusMessage *dm) {
+egress_iter(TermIterator *ti, TermHandler *th, DBusMessageIter *iter) {
 
 	TermStruct ts;
 	int tt;
@@ -526,7 +586,7 @@ egress_iter(TermIterator *ti, TermHandler *th, DBusMessage *dm) {
 	switch(ti->state) {
 		case TIS_START:
 			tt=egress_decode_prim(th);
-			egress_append_prim(th, dm, tt);
+			egress_append_prim(th, iter, tt);
 			break;
 
 		case TIS_WAIT_PRIM:
