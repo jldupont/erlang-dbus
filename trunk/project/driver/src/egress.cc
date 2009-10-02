@@ -6,11 +6,11 @@
  *
  * \section Overview
  *
- * Erlang Client --> DBus
+ * This module implements the communication from the Erlang Client towards DBus.
  *
- * - Receive Protocol Packet from Erlang Client
- * - Perform protocol adaptation
- * - Send on DBus
+ * \section Protocol
+ *
+ *	[MsgType,
  *
  * \section Protocol from Erlang Client
  *
