@@ -99,12 +99,12 @@ typedef struct _MessageHeader {
 
 
 enum _TIState {
-	 TIS_START
+	 TIS_START_PRIM
 	,TIS_START_VARIANT
 	,TIS_START_STRUCT
 	,TIS_START_ARRAY
 	,TIS_START_DICT
-	,TIS_WAIT_PRIM
+	,TIS_FILL_VALUE
 	,TIS_WAIT_LIST
 	,TIS_STOP
 } TIState;
@@ -181,7 +181,7 @@ __egress_thread_function(void *conn) {
 			exit(EDBUS_CREATE_DBUSMSG_ERROR);
 		}
 		TermIterator ti;
-		ti.state=TIS_START;
+		ti.state=TIS_START_PRIM;
 
 		// start iterating & translating
 		DBusMessageIter iter;
@@ -586,8 +586,11 @@ int egress_next_state(int cs, int tt) {
 	case DBUS_TYPE_VARIANT:    ns=TIS_WAIT_VARIANT; break;
 	case DBUS_TYPE_STRUCT:	   ns=TIS_WAIT_STRUCT;  break;
 	case DBUS_TYPE_DICT_ENTRY: ns=TIS_WAIT_DICT;    break;
+
+	// if we do not have to deal with a compound,
+	// make sure we complete the primitive then
 	default:
-		ns=TIS_WAIT_PRIM;
+		ns=TIS_FILL_VALUE;
 		break;
 	}//switch
 
@@ -607,31 +610,51 @@ int egress_next_state(int cs, int tt) {
  *   For structs and dict entries, contained_signature should be NULL; it will be set to whatever types you write into the struct.
  *   For arrays, contained_signature should be the type of the array elements.
  * "
+ *
+ * DICT_ENTRY:
+ *   A DICT_ENTRY works exactly like a struct, but rather than parentheses it uses curly braces, and it has more restrictions.
+ *   The restrictions are: it occurs only as an array element type; it has exactly two single complete types inside the curly braces;
+ *   the first single complete type (the "key") must be a basic type rather than a container type.
+ *   Implementations:
+ *    - must not accept dict entries outside of arrays,
+ *    - must not accept dict entries with zero, one, or more than two fields, and
+ *    - must not accept dict entries with non-basic-typed keys.
+ *   A dict entry is always a key-value pair.
+ *
+ *
  */
 int
 egress_iter(TermIterator *ti, TermHandler *th, DBusMessageIter *iter) {
 
 	TermStruct ts;
-	int tt; //DBus term type
+
+	char sig[2];
 
 	do {
 		switch(ti->state) {
-			case TIS_START:
-				tt=egress_decode_prim(th);
-				ti->state(egress_next_state(ti->state, tt));
+			case TIS_START_PRIM:
+				ti->tt=egress_decode_prim(th);
+				ti->state(egress_next_state(ti->state, ti->tt));
 				break;
 
-			case TIS_WAIT_DICT:
-			case TIS_WAIT_STRUCT:
+			case TIS_START_DICT: {
+				sig[0]='';
+				sig[1]='\0';
+				dbus_message_iter_open_container (iter,
+												DBUS_TYPE_DICT_ENTRY,
+												sig,
+								&container_iter);
+			}
+			case TIS_START_STRUCT:
+
 
 				// we just need the type that follows
 				// in order to start building the container
-			case TIS_WAIT_ARRAY:
-			case TIS_WAIT_VARIANT:
+			case TIS_START_ARRAY:
+			case TIS_START_VARIANT:
 
-			case TIS_WAIT_PRIM:
-
-				egress_append_prim(th, iter, tt);
+			case TIS_FILL_VALUE:
+				egress_append_prim(th, iter, ti->tt);
 				//no state change
 				break;
 
