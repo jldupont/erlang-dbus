@@ -444,56 +444,67 @@ void
 egress_append_prim(TermHandler *th, DBusMessage *dm, int tt) {
 
 	TermStruct ts;
-	switch(tt) {
-	case DBUS_TYPE_BYTE:
-		byte = strtoul (value, NULL, 0);
-		dbus_message_iter_append_basic (iter, DBUS_TYPE_BYTE, &byte);
-		break;
+	int r=th->iter(&ts);
+	if (r) {
+		DBGLOG(LOG_ERR, "egress_append_prim: expecting a term()");
+		exit(EDBUS_DECODE_ERROR);
+	}//=============================
 
-	case DBUS_TYPE_DOUBLE:
+	switch(tt) {
+	case DBUS_TYPE_BYTE: {
+		unsigned char b;
+		if (TERMTYPE_LONG==ts.type) {
+			unsigned char b = (unsigned char) ts.Value.integer;
+			dbus_message_iter_append_basic (iter, DBUS_TYPE_BYTE, &b);
+		}
+		break;
+	}
+	case DBUS_TYPE_DOUBLE: {
 		d = strtod (value, NULL);
 		dbus_message_iter_append_basic (iter, DBUS_TYPE_DOUBLE, &d);
 		break;
-
-	case DBUS_TYPE_INT16:
+	}
+	case DBUS_TYPE_INT16: {
 		int16 = strtol (value, NULL, 0);
 		dbus_message_iter_append_basic (iter, DBUS_TYPE_INT16, &int16);
 		break;
-
-	case DBUS_TYPE_UINT16:
+	}
+	case DBUS_TYPE_UINT16: {
 		uint16 = strtoul (value, NULL, 0);
 		dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT16, &uint16);
 		break;
-
-	case DBUS_TYPE_INT32:
+	}
+	case DBUS_TYPE_INT32: {
 		int32 = strtol (value, NULL, 0);
 		dbus_message_iter_append_basic (iter, DBUS_TYPE_INT32, &int32);
 		break;
-
-	case DBUS_TYPE_UINT32:
+	}
+	case DBUS_TYPE_UINT32: {
 		uint32 = strtoul (value, NULL, 0);
 		dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT32, &uint32);
 		break;
-
-	case DBUS_TYPE_INT64:
+	}
+	case DBUS_TYPE_INT64: {
 		int64 = strtoll (value, NULL, 0);
 		dbus_message_iter_append_basic (iter, DBUS_TYPE_INT64, &int64);
 		break;
-
-	case DBUS_TYPE_UINT64:
+	}
+	case DBUS_TYPE_UINT64: {
 		uint64 = strtoull (value, NULL, 0);
 		dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT64, &uint64);
 		break;
-
-	case DBUS_TYPE_STRING:
+	}
+	case DBUS_TYPE_STRING: {
 		dbus_message_iter_append_basic (iter, DBUS_TYPE_STRING, &value);
 		break;
-
-	case DBUS_TYPE_OBJECT_PATH:
+	}
+	case DBUS_TYPE_OBJECT_PATH: {
 		dbus_message_iter_append_basic (iter, DBUS_TYPE_OBJECT_PATH, &value);
 		break;
+	}
+	case DBUS_TYPE_BOOLEAN: {
 
-	case DBUS_TYPE_BOOLEAN:
+	}
 	}//switch
 
 
