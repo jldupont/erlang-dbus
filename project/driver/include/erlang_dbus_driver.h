@@ -8,6 +8,10 @@
  *
  * \section Protocol
  *
+ * As the driver gets registered on the DBus and acquires a connection, a 'unique-name' is assigned
+ * to the connection.  This 'unique-name' (e.g. ":1.1173") is useful for filtering incoming messages.
+ * The 'unique-name' is forwarded to the Erlang Client through the following
+ *
  * 	\subsection Types
  *
  * 		\li Type=         atom()

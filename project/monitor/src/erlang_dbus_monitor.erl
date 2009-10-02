@@ -40,7 +40,7 @@ loop() ->
 	
 
 start_drv() ->
-	Port = open_port({spawn, ?DRV++" type=\'method_call\'"}, [{packet, 2}, binary, exit_status]),
+	Port = open_port({spawn, ?DRV++" type=\'method_call\'"}, [{packet, 4}, binary, exit_status]),
 	self() ! {port, Port}.	
 
 

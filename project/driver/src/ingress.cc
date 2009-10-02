@@ -291,6 +291,8 @@ ingress_do_iter(TermHandler *th,
 	  case DBUS_TYPE_STRING: {
 		char *val;
 		dbus_message_iter_get_basic (iter, &val);
+		DBGLOG(LOG_INFO, "encoding string: %s", val);
+
 		result=ingress_encode_string(th, val);
 		DBGBEGIN
 		if (result) DBGLOG(LOG_ERR, DMSG, "encoding string");
@@ -301,6 +303,8 @@ ingress_do_iter(TermHandler *th,
 	  case DBUS_TYPE_SIGNATURE: {
 		char *val;
 		dbus_message_iter_get_basic (iter, &val);
+		DBGLOG(LOG_INFO, "encoding sig: %s", val);
+
 		result=ingress_encode_sig(th, val);
 		DBGBEGIN
 		if (result) DBGLOG(LOG_ERR, DMSG, "encoding signature");
@@ -311,6 +315,8 @@ ingress_do_iter(TermHandler *th,
 	  case DBUS_TYPE_OBJECT_PATH: {
 		char *val;
 		dbus_message_iter_get_basic (iter, &val);
+		DBGLOG(LOG_INFO, "encoding object path: %s", val);
+
 		result=ingress_encode_op(th, val);
 		DBGBEGIN
 		if (result) DBGLOG(LOG_ERR, DMSG, "encoding Object Path");
@@ -433,6 +439,8 @@ ingress_do_iter(TermHandler *th,
 	  case DBUS_TYPE_BOOLEAN: {
 		dbus_bool_t val;
 		dbus_message_iter_get_basic (iter, &val);
+		DBGLOG(LOG_INFO, "encoding bool: %i", val);
+
 		if (!ingress_encode_tuple_start(th, "bo")) {
 			ts.type=TERMTYPE_ULONG;
 			ts.Value.integer= (unsigned long)val;
@@ -445,6 +453,7 @@ ingress_do_iter(TermHandler *th,
 	  }
 
 	  case DBUS_TYPE_VARIANT: {
+		DBGLOG(LOG_INFO, "encoding VARIANT");
 
 		ts.type=TERMTYPE_START_TUPLE;
 		ts.size=2;
@@ -459,12 +468,16 @@ ingress_do_iter(TermHandler *th,
 				result=ingress_do_iter(th, &subiter);
 			}
 		}
+		ts.type=TERMTYPE_END_LIST;
+		result=th->append(&ts);
+
 		DBGBEGIN
 		if (result) DBGLOG(LOG_ERR, DMSG, "encoding VARIANT");
 		DBGEND
 		break;
 	  }
 	  case DBUS_TYPE_ARRAY: {
+		DBGLOG(LOG_INFO, "encoding ARRAY");
 		int current_type;
 		DBusMessageIter subiter;
 
@@ -503,6 +516,7 @@ ingress_do_iter(TermHandler *th,
 		break;
 	  }
 	  case DBUS_TYPE_DICT_ENTRY: {
+		DBGLOG(LOG_INFO, "encoding DICT");
 		DBusMessageIter subiter;
 
 		dbus_message_iter_recurse (iter, &subiter);
@@ -537,6 +551,8 @@ ingress_do_iter(TermHandler *th,
 	  }
 
 	  case DBUS_TYPE_STRUCT: {
+		DBGLOG(LOG_INFO, "encoding STRUCT");
+
 		int current_type;
 		DBusMessageIter subiter;
 
@@ -631,7 +647,7 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 	edmsg->sender = dbus_message_get_sender (message);
 	edmsg->dest =   dbus_message_get_destination (message);
 
-	DBGLOG(LOG_INFO, "ingress_handle_message, message type: %i", edmsg->type);
+	//DBGLOG(LOG_INFO, "ingress_handle_message, message type: %i", edmsg->type);
 
 	switch(edmsg->type) {
 	  case DBUS_MESSAGE_TYPE_METHOD_CALL:
@@ -683,7 +699,10 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 	oth->append(&ts);
 
 	//regardless of what happens, we do not need
-	//this object anymore
+	//these objects anymore... we can't recycle object
+	//instances because I do not know if the filter-func needs
+	//to be re-entrant... I don't really need to bother with this,
+	//at least not now.
 	delete oth;
 	free( edmsg );
 	free( iter );
