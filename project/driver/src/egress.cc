@@ -110,6 +110,7 @@ __egress_thread_function(void *conn) {
 	TermHandler *th = new TermHandler();
 
 	MessageHeader mh;
+	DBusMessage   *dm;
 
 	do {
 
@@ -129,11 +130,22 @@ __egress_thread_function(void *conn) {
 			exit(EDBUS_DECODE_HEADER_ERROR);
 		}
 
-		r=egress_iter(th);
+		// Init message to DBus
+		dm=egress_init_dbus_message(mh);
+		if (NULL==dm) {
+			DBGLOG(LOG_ERR, "egress thread: can't create DBus message");
+			exit(EDBUS_CREATE_DBUSMSG_ERROR);
+		}
+
+		// start iterating & translating
+		r=egress_iter(th, dm);
 		egress_handle_code(r);    //this will exit if required
 
 		//recycle the packet
 		p->clean();
+
+		// FINALLY, send on the DBus
+		//r=egress_send(mh,)
 
 
 	} while(TRUE);
@@ -337,6 +349,54 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 	return 0;
 }//
 
+
+/**
+ * Only valid message types should end-up here
+ *
+ */
+DBusMessage *
+egress_init_dbus_message(MessageHeader *mh) {
+
+	DBusMessage *dm=dbus_message_new(mh->type);
+	if (NULL==dm)
+		return NULL;
+
+	switch(mh->type) {
+
+	// we need Path, Interface & Member elements
+	case DBUS_MESSAGE_TYPE_SIGNAL:
+	case DBUS_MESSAGE_TYPE_METHOD_CALL:
+		dbus_message_set_interface(dm, mh->interface);
+		dbus_message_set_path(dm, mh->path);
+		dbus_message_set_member(dm, mh->member);
+		break;
+
+	// common part only needed
+	case DBUS_MESSAGE_TYPE_METHOD_RETURN:
+		break;
+
+	// we still need the "Name" element
+	case DBUS_MESSAGE_TYPE_ERROR:
+		dm=dbus_message_set_error_name(dm, mh->name);
+		break;
+
+
+	// fail fast!
+	default:
+	case DBUS_MESSAGE_TYPE_INVALID:
+		DBGLOG(LOG_ERR, "egress thread: invalid message type");
+		exit(EDBUS_UNSUPPORTED_TYPE);
+		break;
+
+	}//switch
+
+	// Common part
+	dbus_message_set_sender(dm,       mh->sender);
+	dbus_message_set_destination(dm,  mh->dest);
+	dbus_message_set_reply_serial(dm, mh->serial);
+
+	return dm;
+}//
 
 
 int
