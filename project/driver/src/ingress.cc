@@ -36,6 +36,7 @@ static char str_DBUS_MESSAGE_TYPE_ERROR[]=         "e";
 char *IFilters[INGRESS_MAX_FILTERS+1];
 int IFilterCount=0;
 DBusConnection *IConn=NULL;
+int Iuniq_name_sent=FALSE;
 
 
 // Prototypes
@@ -45,7 +46,7 @@ void ingress_handle_message(DBusMessage *message, void *user_data);
 int ingress_do_iter(TermHandler *th, DBusMessageIter *iter);
 int ingress_init_message(TermHandler *th, EDBusMessage *edmsg);
 char *ingress_translate_type(int);
-
+int ingress_send_unique_name(const char *uniq_name);
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -185,7 +186,7 @@ ingress_init_message(TermHandler *th, EDBusMessage *edmsg) {
 
 	// [Type
 	char *type=ingress_translate_type(edmsg->type);
-	ts.type=TERMTYPE_STRING;
+	ts.type=TERMTYPE_ATOM;
 	ts.Value.string=type;
 	th->append(&ts);
 
@@ -460,7 +461,7 @@ ingress_do_iter(TermHandler *th,
 		result=th->append(&ts);
 		if (!result) {
 			ts.type=TERMTYPE_ATOM;
-			ts.Value.string= (void *) "var";
+			ts.Value.string= (void *) "v";
 			result=th->append(&ts);
 			if (!result) {
 				DBusMessageIter subiter;
@@ -486,7 +487,7 @@ ingress_do_iter(TermHandler *th,
 		result=th->append(&ts);
 		if (!result) {
 			ts.type=TERMTYPE_ATOM;
-			ts.Value.string= (void *) "arr";
+			ts.Value.string= (void *) "a";
 			result=th->append(&ts);
 			if (!result) {
 					dbus_message_iter_recurse (iter, &subiter);
@@ -526,7 +527,7 @@ ingress_do_iter(TermHandler *th,
 		if (!result) {
 
 			ts.type=TERMTYPE_ATOM;
-			ts.Value.string= (void *) "dic";
+			ts.Value.string= (void *) "d";
 			result=th->append(&ts);
 			if (!result) {
 
@@ -617,6 +618,24 @@ ingress_filter_func (DBusConnection *connection,
 {
 	//DBGLOG(LOG_INFO, "ingress_filter_func, conn: %i  message: %i", connection, message);
 
+
+	// we need to inform the Erlang Client of our 'unique-name'
+	// associated with the connection.
+	if (Iuniq_name_sent == FALSE) {
+	  const char *uniq_name = dbus_bus_get_unique_name(connection);
+	  DBGLOG(LOG_INFO, "unique-name: %s", uniq_name);
+
+	  //paranoia
+	  if (NULL==uniq_name) {
+			exit(EDBUS_INVALID_UNIQUE_NAME);
+	  }
+	  if (ingress_send_unique_name(uniq_name)) {
+		  exit(EDBUS_ERROR_SENDING_UNIQ);
+	  }
+	  Iuniq_name_sent=TRUE;
+	}
+
+	// main message handling starts here
 	ingress_handle_message(message, user_data);
 
 	if (dbus_message_is_signal (message,
@@ -731,3 +750,34 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 
 }//
 
+
+int
+ingress_send_unique_name(const char *uniq_name) {
+
+	Pkt         *p =new Pkt();
+	PktHandler  *ph=new PktHandler();
+	TermHandler *th=new TermHandler();
+
+	th->init(p);
+
+	TermStruct ts;
+	ts.type=TERMTYPE_START_TUPLE;
+	ts.size=2;
+	th->append(&ts);
+
+	ts.type=TERMTYPE_ATOM;
+	ts.Value.string=(void *) "unique_name";
+	th->append(&ts);
+
+	ts.type=TERMTYPE_STRING;
+	ts.Value.string=(void *) uniq_name;
+	th->append(&ts);
+
+	int result=ph->tx(p);
+
+	delete p;
+	delete ph;
+	delete th;
+
+	return result;
+}//

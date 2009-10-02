@@ -123,11 +123,11 @@ int main(int argc, char **argv) {
 
 	  dbus_error_init (&error);
 
-	  int rr=dbus_bus_request_name(connection, "com.jldupont.dbus", 0, &error);
-	  if (-1==rr) {
-		  DBGLOG(LOG_INFO, "request_name error: %s", error.message);
-		  exit(EDBUS_REGISTRATION_FAILED);
-	  }
+	  //int rr=dbus_bus_request_name(connection, "com.jldupont.dbus", 0, &error);
+	  //if (-1==rr) {
+	//	  DBGLOG(LOG_INFO, "request_name error: %s", error.message);
+	//	  exit(EDBUS_REGISTRATION_FAILED);
+	 // }
 
 	  // The following breaks big time!
 
@@ -138,12 +138,6 @@ int main(int argc, char **argv) {
 	//		exit(EDBUS_INVALID_UNIQUE_NAME);
 	  //}
 
-	  // Before starting any thread or the main loop,
-	  // we need to inform the Erlang Client of our 'unique-name'
-	  // associated with the connection.
-	  //if (send_unique_name(uniq_name)) {
-	//	  exit(EDBUS_ERROR_SENDING_UNIQ);
-	  //}
 
 
 
@@ -171,34 +165,4 @@ int main(int argc, char **argv) {
 	  exit (EDBUS_OK);
 }//
 
-int
-send_unique_name(const char *uniq_name) {
-
-	Pkt         *p =new Pkt();
-	PktHandler  *ph=new PktHandler();
-	TermHandler *th=new TermHandler();
-
-	th->init(p);
-
-	TermStruct ts;
-	ts.type=TERMTYPE_START_TUPLE;
-	ts.size=2;
-	th->append(&ts);
-
-	ts.type=TERMTYPE_ATOM;
-	ts.Value.string=(void *) "unique_name";
-	th->append(&ts);
-
-	ts.type=TERMTYPE_STRING;
-	ts.Value.string=(void *) uniq_name;
-	th->append(&ts);
-
-	int result=ph->tx(p);
-
-	delete p;
-	delete ph;
-	delete th;
-
-	return result;
-}//
 
