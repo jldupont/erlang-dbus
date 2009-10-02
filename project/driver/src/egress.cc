@@ -58,6 +58,26 @@ pthread_t _egressThread;
 #define ETYPE_ERROR            "e"
 
 
+#define ETYPE_STRING  "str"
+#define ETYPE_SIG     "sig"
+#define ETYPE_OP      "op"
+#define ETYPE_INT16   "i16"
+#define ETYPE_UINT16  "ui16"
+#define ETYPE_INT32   "i32"
+#define ETYPE_UINT32  "ui32"
+#define ETYPE_INT64   "i64"
+#define ETYPE_UINT64  "ui64"
+#define ETYPE_DOUBLE  "f"
+#define ETYPE_BYTE    "by"
+#define ETYPE_BOOL    "bo"
+#define ETYPE_VARIANT "v"
+#define ETYPE_ARRAY   "a"
+#define ETYPE_DICT    "d"
+#define ETYPE_STRUCT  "st"
+
+
+
+
 typedef struct _MessageHeader {
 
 	int type;
@@ -102,7 +122,7 @@ int  egress_translate_type(const char *type);
 int egress_decode_header(TermHandler *th, MessageHeader *mh);
 int egress_iter(TermIterator *ti, TermHandler *th, DBusMessage *dm);
 DBusMessage *egress_init_dbus_message(MessageHeader *mh);
-
+int egress_translate_etype(const char *tt);
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -417,6 +437,68 @@ egress_init_dbus_message(MessageHeader *mh) {
 	return dm;
 }//
 
+/**
+ * @param tt DBUS_TYPE_xyz
+ */
+void
+egress_append_prim(TermHandler *th, DBusMessage *dm, int tt) {
+
+	TermStruct ts;
+	switch(tt) {
+	case DBUS_TYPE_BYTE:
+		byte = strtoul (value, NULL, 0);
+		dbus_message_iter_append_basic (iter, DBUS_TYPE_BYTE, &byte);
+		break;
+
+	case DBUS_TYPE_DOUBLE:
+		d = strtod (value, NULL);
+		dbus_message_iter_append_basic (iter, DBUS_TYPE_DOUBLE, &d);
+		break;
+
+	case DBUS_TYPE_INT16:
+		int16 = strtol (value, NULL, 0);
+		dbus_message_iter_append_basic (iter, DBUS_TYPE_INT16, &int16);
+		break;
+
+	case DBUS_TYPE_UINT16:
+		uint16 = strtoul (value, NULL, 0);
+		dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT16, &uint16);
+		break;
+
+	case DBUS_TYPE_INT32:
+		int32 = strtol (value, NULL, 0);
+		dbus_message_iter_append_basic (iter, DBUS_TYPE_INT32, &int32);
+		break;
+
+	case DBUS_TYPE_UINT32:
+		uint32 = strtoul (value, NULL, 0);
+		dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT32, &uint32);
+		break;
+
+	case DBUS_TYPE_INT64:
+		int64 = strtoll (value, NULL, 0);
+		dbus_message_iter_append_basic (iter, DBUS_TYPE_INT64, &int64);
+		break;
+
+	case DBUS_TYPE_UINT64:
+		uint64 = strtoull (value, NULL, 0);
+		dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT64, &uint64);
+		break;
+
+	case DBUS_TYPE_STRING:
+		dbus_message_iter_append_basic (iter, DBUS_TYPE_STRING, &value);
+		break;
+
+	case DBUS_TYPE_OBJECT_PATH:
+		dbus_message_iter_append_basic (iter, DBUS_TYPE_OBJECT_PATH, &value);
+		break;
+
+	case DBUS_TYPE_BOOLEAN:
+	}//switch
+
+
+}//
+
 
 /**
  * If we are at the start of the message part
@@ -428,6 +510,25 @@ int
 egress_iter(TermIterator *ti, TermHandler *th, DBusMessage *dm) {
 
 	TermStruct ts;
+	int tt;
+
+	switch(ti->state) {
+		case TIS_START:
+			tt=egress_decode_prim(th);
+			egress_append_prim(th, dm, tt);
+			break;
+
+		case TIS_WAIT_PRIM:
+		case TIS_WAIT_LIST:
+
+		default:
+			// this shouldn't happen since we are designing the state-machine!
+			DBGLOG(LOG_ERR, "egress_iter: unknown state");
+			exit(EDBUS_UNKNOWN_EGRESS_STATE);
+	}//switch
+
+
+
 
 	int r=th->iter(&ts);
 	if (r) return 1;
@@ -464,4 +565,59 @@ egress_iter(TermIterator *ti, TermHandler *th, DBusMessage *dm) {
 	return 0;
 }//
 
+/**
+ * Expects to decode a tuple() consisting
+ * of a DBus primitive as coded by the Erlang Client
+ *
+ *  {atom(),
+ *
+ *  @return DBUS_TYPE_xyz
+ */
+int
+egress_decode_prim(TermHandler *th) {
 
+	TermStruct ts;
+
+	int r=th->iter(&ts);
+	if (r) return 1;
+	if (TERMTYPE_START_TUPLE!=ts.type) {
+		DBGLOG(LOG_ERR, "egress_decode_prim: expecting 'start_tuple'");
+		return DBUS_TYPE_INVALID;
+	}
+
+	r=th->iter(&ts);
+	if (r) return 1;
+	if (TERMTYPE_ATOM!=ts.type) {
+		DBGLOG(LOG_ERR, "egress_decode_prim: expecting 'atom()'");
+		return DBUS_TYPE_INVALID;
+	}
+
+	r=egress_translate_etype((const char *)ts.Value.string);
+	th->clean(&ts);
+
+	return r;
+}//
+
+
+int
+egress_translate_etype(const char *tt) {
+
+	if (strcmp(tt, ETYPE_STRING)==0) return DBUS_TYPE_STRING;
+	if (strcmp(tt, ETYPE_SIG)==0)    return DBUS_TYPE_SIGNATURE;
+	if (strcmp(tt, ETYPE_OP)==0)     return DBUS_TYPE_OBJECT_PATH;
+	if (strcmp(tt, ETYPE_INT16)==0)  return DBUS_TYPE_INT16;
+	if (strcmp(tt, ETYPE_UINT16)==0) return DBUS_TYPE_UINT16;
+	if (strcmp(tt, ETYPE_INT32)==0)  return DBUS_TYPE_INT32;
+	if (strcmp(tt, ETYPE_UINT32)==0) return DBUS_TYPE_UINT32;
+	if (strcmp(tt, ETYPE_INT64)==0)  return DBUS_TYPE_INT64;
+	if (strcmp(tt, ETYPE_UINT64)==0) return DBUS_TYPE_UINT64;
+	if (strcmp(tt, ETYPE_DOUBLE)==0) return DBUS_TYPE_DOUBLE;
+	if (strcmp(tt, ETYPE_BYTE)==0)   return DBUS_TYPE_BYTE;
+	if (strcmp(tt, ETYPE_BOOL)==0)   return DBUS_TYPE_BOOLEAN;
+	if (strcmp(tt, ETYPE_VARIANT)==0)return DBUS_TYPE_VARIANT;
+	if (strcmp(tt, ETYPE_ARRAY)==0)  return DBUS_TYPE_ARRAY;
+	if (strcmp(tt, ETYPE_DICT)==0)   return DBUS_TYPE_DICT_ENTRY;
+	if (strcmp(tt, ETYPE_STRUCT)==0) return DBUS_TYPE_STRUCT;
+
+	return DBUS_TYPE_INVALID;
+}
