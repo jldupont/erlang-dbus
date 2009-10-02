@@ -1,3 +1,29 @@
+[r,2,
+       {str,":1.5"},
+       {str,":1.1386"},
+       {a,[{st,[{str,"sftp"},{str,"sftp"},{a,[{str,"ssh"}]},{i32,22},{bo,1}]},
+           {st,[{str,"trash"},{str,"trash"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"gphoto2"},{str,"gphoto2"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"smb-server"},{str,"smb"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"smb-network"},{str,"smb"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"obex"},{str,"obex"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"ftp"},{str,"ftp"},{a,[]},{i32,21},{bo,1}]},
+           {st,[{str,"davs+sd"},{str,"davs+sd"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"dav+sd"},{str,"dav+sd"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"archive"},{str,"archive"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"dns-sd"},{str,"dns-sd"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"burn"},{str,"burn"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"computer"},{str,"computer"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"cdda"},{str,"cdda"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"http"},{str,"http"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"network"},{str,"network"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"davs"},{str,"davs"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"dav"},{str,"dav"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"localtest"},{str,"localtest"},{a,[]},{i32,0},{bo,0}]},
+           {st,[{str,"smb-share"},{str,"smb"},{a,[]},{i32,0},{bo,0}]}]}]
+
+
+
 
 method call sender=:1.1170 -> dest=org.freedesktop.Notifications serial=413 path=/org/freedesktop/Notifications; interface=org.freedesktop.Notifications; member=Notify
    string "rhythmbox"

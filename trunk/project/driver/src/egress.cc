@@ -78,6 +78,21 @@ typedef struct _MessageHeader {
 } MessageHeader;
 
 
+enum _TIState {
+	 TIS_START
+	,TIS_WAIT_PRIM
+	,TIS_WAIT_LIST
+} TIState;
+
+
+// To iterate over Terms of an Erlang Client message
+typedef struct _TermIterator {
+	int state;
+} TermIterator;
+
+
+
+
 
 // Prototypes
 // ===========
@@ -85,7 +100,7 @@ void *__egress_thread_function(void *conn);
 void egress_handle_code(int code);
 int  egress_translate_type(const char *type);
 int egress_decode_header(TermHandler *th, MessageHeader *mh);
-int egress_iter(TermHandler *th, DBusMessage *dm);
+int egress_iter(TermIterator *ti, TermHandler *th, DBusMessage *dm);
 DBusMessage *egress_init_dbus_message(MessageHeader *mh);
 
 
@@ -137,9 +152,11 @@ __egress_thread_function(void *conn) {
 			DBGLOG(LOG_ERR, "egress thread: can't create DBus message");
 			exit(EDBUS_CREATE_DBUSMSG_ERROR);
 		}
+		TermIterator ti;
+		ti.state=TIS_START;
 
 		// start iterating & translating
-		r=egress_iter(th, dm);
+		r=egress_iter(&ti, th, dm);
 		egress_handle_code(r);    //this will exit if required
 
 		//recycle the packet
@@ -408,7 +425,7 @@ egress_init_dbus_message(MessageHeader *mh) {
  *
  */
 int
-egress_iter(TermHandler *th, DBusMessage *dm) {
+egress_iter(TermIterator *ti, TermHandler *th, DBusMessage *dm) {
 
 	TermStruct ts;
 
@@ -416,9 +433,12 @@ egress_iter(TermHandler *th, DBusMessage *dm) {
 	if (r) return 1;
 
 	switch(ts.type) {
-	case TERMTYPE_UNSUPPORTED:
+
 	case TERMTYPE_END:
+		break;
+
 	case TERMTYPE_START_LIST:
+
 	case TERMTYPE_END_LIST:
 	case TERMTYPE_START_TUPLE:
 	case TERMTYPE_ATOM:
@@ -431,8 +451,12 @@ egress_iter(TermHandler *th, DBusMessage *dm) {
 	case TERMTYPE_BINARY:
 	case TERMTYPE_NIL:
 
+	//fail fast
+	case TERMTYPE_UNSUPPORTED:
 	case TERMTYPE_INVALID:
 	default:
+		DBGLOG(LOG_ERR, "egress_iter: invalid/unsupported type: %i", ts.type);
+		exit(EDBUS_UNSUPPORTED_TYPE);
 		break;
 	}//switch
 
