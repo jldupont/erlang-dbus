@@ -108,6 +108,7 @@ enum _TIState {
 // To iterate over Terms of an Erlang Client message
 typedef struct _TermIterator {
 	int state;
+	int tt; // current term-type
 } TermIterator;
 
 
@@ -438,7 +439,6 @@ egress_init_dbus_message(MessageHeader *mh) {
 	dbus_message_set_sender(dm,       mh->sender);
 	dbus_message_set_destination(dm,  mh->dest);
 
-
 	return dm;
 }//
 
@@ -567,6 +567,7 @@ egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
 	}
 	}//switch
 
+	th->clean(&ts);
 
 }//
 
@@ -576,62 +577,56 @@ egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
  * of the packet received, we would get at least
  * one other list element.
  *
+ * From the documentation:
+ * =======================
+ * " Container types are for example struct, variant, and array.
+ *   For variants, the contained_signature should be the type of the single value inside the variant.
+ *   For structs and dict entries, contained_signature should be NULL; it will be set to whatever types you write into the struct.
+ *   For arrays, contained_signature should be the type of the array elements.
+ * "
  */
 int
 egress_iter(TermIterator *ti, TermHandler *th, DBusMessageIter *iter) {
 
 	TermStruct ts;
-	int tt;
+	int tt; //DBus term type
 
-	switch(ti->state) {
-		case TIS_START:
-			tt=egress_decode_prim(th);
-			egress_append_prim(th, iter, tt);
-			break;
+	do {
+		switch(ti->state) {
+			case TIS_START:
+				tt=egress_decode_prim(th);
 
-		case TIS_WAIT_PRIM:
-		case TIS_WAIT_LIST:
+				// do we have to deal with a compound type??
+				int ttn;
+				switch(tt) {
+				case DBUS_TYPE_ARRAY:
+				case DBUS_TYPE_VARIANT:
+					ttn=egress_decode_prim(th);
+					break;
 
-		default:
-			// this shouldn't happen since we are designing the state-machine!
-			DBGLOG(LOG_ERR, "egress_iter: unknown state");
-			exit(EDBUS_UNKNOWN_EGRESS_STATE);
-	}//switch
+				case DBUS_TYPE_STRUCT:
+				case DBUS_TYPE_DICT_ENTRY:
 
+				default:
+					egress_append_prim(th, iter, tt);
+					break;
+				}//switch
+				break;
+			case TIS_WAIT_PRIM:
 
+				egress_append_prim(th, iter, tt);
+				//no state change
+				break;
 
+			case TIS_WAIT_LIST:
 
-	int r=th->iter(&ts);
-	if (r) return 1;
+			default:
+				// this shouldn't happen since we are designing the state-machine!
+				DBGLOG(LOG_ERR, "egress_iter: unknown state");
+				exit(EDBUS_UNKNOWN_EGRESS_STATE);
+		}//switch
 
-	switch(ts.type) {
-
-	case TERMTYPE_END:
-		break;
-
-	case TERMTYPE_START_LIST:
-
-	case TERMTYPE_END_LIST:
-	case TERMTYPE_START_TUPLE:
-	case TERMTYPE_ATOM:
-	case TERMTYPE_STRING:
-	case TERMTYPE_DOUBLE:
-	case TERMTYPE_LONG:
-	case TERMTYPE_ULONG:
-	case TERMTYPE_LONGLONG:
-	case TERMTYPE_ULONGLONG:
-	case TERMTYPE_BINARY:
-	case TERMTYPE_NIL:
-
-	//fail fast
-	case TERMTYPE_UNSUPPORTED:
-	case TERMTYPE_INVALID:
-	default:
-		DBGLOG(LOG_ERR, "egress_iter: invalid/unsupported type: %i", ts.type);
-		exit(EDBUS_UNSUPPORTED_TYPE);
-		break;
-	}//switch
-
+	} while(TRUE);
 
 	return 0;
 }//
