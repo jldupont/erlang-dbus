@@ -100,8 +100,13 @@ typedef struct _MessageHeader {
 
 enum _TIState {
 	 TIS_START
+	,TIS_START_VARIANT
+	,TIS_START_STRUCT
+	,TIS_START_ARRAY
+	,TIS_START_DICT
 	,TIS_WAIT_PRIM
 	,TIS_WAIT_LIST
+	,TIS_STOP
 } TIState;
 
 
@@ -572,6 +577,24 @@ egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
 }//
 
 
+int egress_next_state(int cs, int tt) {
+
+	int ns;
+
+	switch(tt) {
+	case DBUS_TYPE_ARRAY:      ns=TIS_WAIT_ARRAY;   break;
+	case DBUS_TYPE_VARIANT:    ns=TIS_WAIT_VARIANT; break;
+	case DBUS_TYPE_STRUCT:	   ns=TIS_WAIT_STRUCT;  break;
+	case DBUS_TYPE_DICT_ENTRY: ns=TIS_WAIT_DICT;    break;
+	default:
+		ns=TIS_WAIT_PRIM;
+		break;
+	}//switch
+
+	return ns;
+}//
+
+
 /**
  * If we are at the start of the message part
  * of the packet received, we would get at least
@@ -595,23 +618,17 @@ egress_iter(TermIterator *ti, TermHandler *th, DBusMessageIter *iter) {
 		switch(ti->state) {
 			case TIS_START:
 				tt=egress_decode_prim(th);
-
-				// do we have to deal with a compound type??
-				int ttn;
-				switch(tt) {
-				case DBUS_TYPE_ARRAY:
-				case DBUS_TYPE_VARIANT:
-					ttn=egress_decode_prim(th);
-					break;
-
-				case DBUS_TYPE_STRUCT:
-				case DBUS_TYPE_DICT_ENTRY:
-
-				default:
-					egress_append_prim(th, iter, tt);
-					break;
-				}//switch
+				ti->state(egress_next_state(ti->state, tt));
 				break;
+
+			case TIS_WAIT_DICT:
+			case TIS_WAIT_STRUCT:
+
+				// we just need the type that follows
+				// in order to start building the container
+			case TIS_WAIT_ARRAY:
+			case TIS_WAIT_VARIANT:
+
 			case TIS_WAIT_PRIM:
 
 				egress_append_prim(th, iter, tt);
@@ -626,7 +643,7 @@ egress_iter(TermIterator *ti, TermHandler *th, DBusMessageIter *iter) {
 				exit(EDBUS_UNKNOWN_EGRESS_STATE);
 		}//switch
 
-	} while(TRUE);
+	} while(ti->state != TIS_STOP);
 
 	return 0;
 }//
