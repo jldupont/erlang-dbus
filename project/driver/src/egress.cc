@@ -255,6 +255,84 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 	mh->dest = (const char *) ts.Value.string;  // this can be NULL e.g. Signals
 	ts.Value.string=NULL;
 
+	// ----------------------------------------------------------------------------
+	// COMMON PART END
+	// ----------------------------------------------------------------------------
+
+	switch(mh->type) {
+
+	// we need Path, Interface & Member elements
+	case DBUS_MESSAGE_TYPE_SIGNAL:
+	case DBUS_MESSAGE_TYPE_METHOD_CALL:
+		r=th->iter(&ts);
+		if (r) {
+			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'path'");
+			return r;
+		}
+		if (TERMTYPE_STRING != ts.type) {
+			DBGLOG(LOG_ERR, "egress_decode_header: missing string(path)");
+			return r;
+		}
+		mh->path = (const char *) ts.Value.string;
+		ts.Value.string = NULL;
+
+		r=th->iter(&ts);
+		if (r) {
+			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'interface'");
+			return r;
+		}
+		if (TERMTYPE_STRING != ts.type) {
+			DBGLOG(LOG_ERR, "egress_decode_header: missing string(interface)");
+			return r;
+		}
+		mh->interface = (const char *) ts.Value.string;
+		ts.Value.string = NULL;
+
+		r=th->iter(&ts);
+		if (r) {
+			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'member'");
+			return r;
+		}
+		if (TERMTYPE_STRING != ts.type) {
+			DBGLOG(LOG_ERR, "egress_decode_header: missing string(member)");
+			return r;
+		}
+		mh->member = (const char *) ts.Value.string;
+		ts.Value.string = NULL;
+		break;
+
+
+	// complete header already
+	case DBUS_MESSAGE_TYPE_METHOD_RETURN:
+		break;
+
+
+	// we still need the "Name" element
+	case DBUS_MESSAGE_TYPE_ERROR:
+		r=th->iter(&ts);
+		if (r) {
+			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'name'");
+			return r;
+		}
+		if (TERMTYPE_STRING != ts.type) {
+			DBGLOG(LOG_ERR, "egress_decode_header: missing string(name)");
+			return r;
+		}
+		mh->name = (const char *) ts.Value.string;
+		ts.Value.string = NULL;
+		break;
+
+
+	// fail fast!
+	default:
+	case DBUS_MESSAGE_TYPE_INVALID:
+		DBGLOG(LOG_ERR, "egress thread: invalid message type");
+		exit(EDBUS_UNSUPPORTED_TYPE);
+		break;
+
+	}//switch
+
+
 	// all went well!
 	return 0;
 }//
