@@ -85,7 +85,8 @@ void *__egress_thread_function(void *conn);
 void egress_handle_code(int code);
 int  egress_translate_type(const char *type);
 int egress_decode_header(TermHandler *th, MessageHeader *mh);
-int egress_iter(TermHandler *th);
+int egress_iter(TermHandler *th, DBusMessage *dm);
+DBusMessage *egress_init_dbus_message(MessageHeader *mh);
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -131,7 +132,7 @@ __egress_thread_function(void *conn) {
 		}
 
 		// Init message to DBus
-		dm=egress_init_dbus_message(mh);
+		dm=egress_init_dbus_message(&mh);
 		if (NULL==dm) {
 			DBGLOG(LOG_ERR, "egress thread: can't create DBus message");
 			exit(EDBUS_CREATE_DBUSMSG_ERROR);
@@ -373,11 +374,12 @@ egress_init_dbus_message(MessageHeader *mh) {
 
 	// common part only needed
 	case DBUS_MESSAGE_TYPE_METHOD_RETURN:
+		dbus_message_set_reply_serial(dm, mh->serial);
 		break;
 
 	// we still need the "Name" element
 	case DBUS_MESSAGE_TYPE_ERROR:
-		dm=dbus_message_set_error_name(dm, mh->name);
+		dbus_message_set_error_name(dm, mh->name);
 		break;
 
 
@@ -393,17 +395,49 @@ egress_init_dbus_message(MessageHeader *mh) {
 	// Common part
 	dbus_message_set_sender(dm,       mh->sender);
 	dbus_message_set_destination(dm,  mh->dest);
-	dbus_message_set_reply_serial(dm, mh->serial);
+
 
 	return dm;
 }//
 
 
+/**
+ * If we are at the start of the message part
+ * of the packet received, we would get at least
+ * one other list element.
+ *
+ */
 int
-egress_iter(TermHandler *th) {
+egress_iter(TermHandler *th, DBusMessage *dm) {
 
 	TermStruct ts;
 
+	int r=th->iter(&ts);
+	if (r) return 1;
+
+	switch(ts.type) {
+	case TERMTYPE_UNSUPPORTED:
+	case TERMTYPE_END:
+	case TERMTYPE_START_LIST:
+	case TERMTYPE_END_LIST:
+	case TERMTYPE_START_TUPLE:
+	case TERMTYPE_ATOM:
+	case TERMTYPE_STRING:
+	case TERMTYPE_DOUBLE:
+	case TERMTYPE_LONG:
+	case TERMTYPE_ULONG:
+	case TERMTYPE_LONGLONG:
+	case TERMTYPE_ULONGLONG:
+	case TERMTYPE_BINARY:
+	case TERMTYPE_NIL:
+
+	case TERMTYPE_INVALID:
+	default:
+		break;
+	}//switch
+
+
+	return 0;
 }//
 
 
