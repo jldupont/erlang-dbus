@@ -105,7 +105,6 @@ enum _TIState {
 	,TIS_START_ARRAY
 	,TIS_START_DICT
 	,TIS_FILL_VALUE
-	,TIS_WAIT_LIST
 	,TIS_STOP
 } TIState;
 
@@ -114,10 +113,15 @@ enum _TIState {
 typedef struct _TermIterator {
 	int state;
 	int tt; // current term-type
+	int ct; // container element-type
 } TermIterator;
 
 
-
+typedef struct _DecodePrim {
+	int end_list;
+	int end_packet;
+	int dt; //DBus type
+} DecodePrim;
 
 
 // Prototypes
@@ -130,7 +134,7 @@ int egress_iter(TermIterator *ti, TermHandler *th, DBusMessageIter *iter);
 DBusMessage *egress_init_dbus_message(MessageHeader *mh);
 int egress_translate_etype(const char *tt);
 void egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt);
-int egress_decode_prim(TermHandler *th);
+int egress_decode_prim(TermHandler *th, DecodePrim *dp);
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -577,15 +581,16 @@ egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
 }//
 
 
-int egress_next_state(int cs, int tt) {
+int
+egress_next_state(int cs, int tt) {
 
 	int ns;
 
 	switch(tt) {
-	case DBUS_TYPE_ARRAY:      ns=TIS_WAIT_ARRAY;   break;
-	case DBUS_TYPE_VARIANT:    ns=TIS_WAIT_VARIANT; break;
-	case DBUS_TYPE_STRUCT:	   ns=TIS_WAIT_STRUCT;  break;
-	case DBUS_TYPE_DICT_ENTRY: ns=TIS_WAIT_DICT;    break;
+	case DBUS_TYPE_ARRAY:      ns=TIS_START_ARRAY;   break;
+	case DBUS_TYPE_VARIANT:    ns=TIS_START_VARIANT; break;
+	case DBUS_TYPE_STRUCT:	   ns=TIS_START_STRUCT;  break;
+	case DBUS_TYPE_DICT_ENTRY: ns=TIS_START_DICT;    break;
 
 	// if we do not have to deal with a compound,
 	// make sure we complete the primitive then
@@ -597,6 +602,91 @@ int egress_next_state(int cs, int tt) {
 	return ns;
 }//
 
+
+void
+process_struct_container(TermHandler *th, DBusMessageIter *iter) {
+
+	TermStruct ts;
+	DBusMessageIter citer;
+	TermIterator cti;
+
+	DBGLOG(LOG_INFO, "egress_iter: start STRUCT");
+	int r=th->iter(&ts);
+	if (r || (!r && (TERMTYPE_START_LIST!=ts.type))) {
+		DBGLOG(LOG_ERR, "egress_iter: expecting 'start array'");
+		exit(EDBUS_DECODE_ERROR);
+	}
+	dbus_message_iter_open_container (iter,
+									DBUS_TYPE_STRUCT,
+									NULL,
+									&citer);
+	cti.state=TIS_START_PRIM;
+	egress_iter(&cti, th, &citer);
+	dbus_message_iter_close_container(iter, &citer);
+}//
+
+void
+process_array_container(TermHandler *th, DBusMessageIter *iter) {
+
+	TermStruct ts;
+	DBusMessageIter citer;
+	TermIterator cti;
+	DecodePrim dp;
+	char sig[2];
+
+	DBGLOG(LOG_INFO, "egress_iter: start ARRAY");
+	int r=th->iter(&ts);
+	if (r || (!r && (TERMTYPE_START_LIST!=ts.type))) {
+		DBGLOG(LOG_ERR, "egress_iter: expecting 'start of list'");
+		exit(EDBUS_DECODE_ERROR);
+	}
+	egress_decode_prim(th, &dp);
+	if ((TRUE==dp.end_packet) || (TRUE==dp.end_list)) {
+		DBGLOG(LOG_ERR, "process_array_container: expecting a complete primitive");
+		exit(EDBUS_DECODE_ERROR);
+	}
+	sig[0]=dp.dt;
+	sig[1]='\0';
+	dbus_message_iter_open_container (iter,
+									DBUS_TYPE_ARRAY,
+									sig,
+									&citer);
+	cti.state=TIS_START_PRIM;
+	egress_iter(&cti, th, &citer);
+	dbus_message_iter_close_container(iter, &citer);
+}
+
+void
+process_variant_container(TermHandler *th, DBusMessageIter *iter) {
+
+	TermStruct ts;
+	DBusMessageIter citer;
+	TermIterator cti;
+	DecodePrim dp;
+	char sig[2];
+
+	DBGLOG(LOG_INFO, "egress_iter: start VARIANT");
+	int r=th->iter(&ts);
+	if (r || (!r && (TERMTYPE_START_LIST!=ts.type))) {
+		DBGLOG(LOG_ERR, "egress_iter: expecting 'start array'");
+		exit(EDBUS_DECODE_ERROR);
+	}
+	egress_decode_prim(th, &dp);
+	if ((TRUE==dp.end_packet) || (TRUE==dp.end_list)) {
+		DBGLOG(LOG_ERR, "egress_iter: (VARIANT) expecting a complete primitive");
+		exit(EDBUS_DECODE_ERROR);
+	}
+	sig[0]=dp.dt;
+	sig[1]='\0';
+	dbus_message_iter_open_container (iter,
+									DBUS_TYPE_ARRAY,
+									sig,
+									&citer);
+	cti.state=TIS_START_PRIM;
+	egress_iter(&cti, th, &citer);
+	dbus_message_iter_close_container(iter, &citer);
+
+}//
 
 /**
  * If we are at the start of the message part
@@ -626,39 +716,65 @@ int egress_next_state(int cs, int tt) {
 int
 egress_iter(TermIterator *ti, TermHandler *th, DBusMessageIter *iter) {
 
-	TermStruct ts;
+	DBusMessageIter citer;
+	TermIterator cti;
+	DecodePrim dp;
 
-	char sig[2];
 
 	do {
 		switch(ti->state) {
 			case TIS_START_PRIM:
-				ti->tt=egress_decode_prim(th);
-				ti->state(egress_next_state(ti->state, ti->tt));
+				egress_decode_prim(th, &dp);
+
+				//not entirely correct... but good anyways:
+				//the Erlang Client is assumed to be handing us
+				//properly formatted data, no? ;-)
+				if ((TRUE==dp.end_packet) || (TRUE==dp.end_list))
+					return 0;
+
+				ti->state=egress_next_state(ti->state, dp.dt);
 				break;
 
 			case TIS_START_DICT: {
-				sig[0]='';
-				sig[1]='\0';
+				DBGLOG(LOG_INFO, "egress_iter: start DICT");
 				dbus_message_iter_open_container (iter,
 												DBUS_TYPE_DICT_ENTRY,
-												sig,
-								&container_iter);
+												NULL,
+												&citer);
+				// @TODO check to make sure we are only dealing
+				//       with a non-compound type for the 'key'
+				//		 part of the dict_entry
+				cti.state=TIS_START_PRIM;
+				egress_iter(&cti, th, &citer);
+				cti.state=TIS_START_PRIM;
+				egress_iter(&cti, th, &citer);
+
+				dbus_message_iter_close_container(iter, &citer);
+				break;
 			}
-			case TIS_START_STRUCT:
-
-
+			case TIS_START_STRUCT: {
+				process_struct_container(th, iter);
+				ti->state=TIS_START_PRIM;
+				break;
+			}
 				// we just need the type that follows
 				// in order to start building the container
-			case TIS_START_ARRAY:
-			case TIS_START_VARIANT:
+			case TIS_START_ARRAY: {
+				process_array_container(th, iter);
+				ti->state=TIS_START_PRIM;
+				break;
+			}
+
+			case TIS_START_VARIANT: {
+				process_variant_container(th, iter);
+				ti->state=TIS_START_PRIM;
+				break;
+			}
 
 			case TIS_FILL_VALUE:
 				egress_append_prim(th, iter, ti->tt);
-				//no state change
+				ti->state=TIS_START_PRIM;
 				break;
-
-			case TIS_WAIT_LIST:
 
 			default:
 				// this shouldn't happen since we are designing the state-machine!
@@ -671,37 +787,67 @@ egress_iter(TermIterator *ti, TermHandler *th, DBusMessageIter *iter) {
 	return 0;
 }//
 
+
 /**
  * Expects to decode a tuple() consisting
  * of a DBus primitive as coded by the Erlang Client
  *
  *  {atom(),
  *
- *  @return DBUS_TYPE_xyz
+ *	@return 0 SUCCESS
+ *  @return 1 FAILURE
  */
 int
-egress_decode_prim(TermHandler *th) {
+egress_decode_prim(TermHandler *th, DecodePrim *dp) {
 
 	TermStruct ts;
 
 	int r=th->iter(&ts);
 	if (r) return 1;
+
+	// if we hit an end of list OR packet,
+	// return quickly
+	switch(ts.type) {
+	case TERMTYPE_END_LIST:
+		dp->end_list=TRUE;
+		dp->end_packet=FALSE;
+		return 0;
+	case TERMTYPE_NIL:
+		dp->end_list=TRUE;
+		dp->end_packet=TRUE;
+		return 0;
+
+	case TERMTYPE_INVALID:
+	case TERMTYPE_UNSUPPORTED:
+		DBGLOG(LOG_ERR, "egress_decode_prim: expecting 'end list' or 'end packet' or 'start_tuple'");
+		exit(EDBUS_DECODE_ERROR);
+
+	default:
+		// proceed further.
+		break;
+	}
+
+	//... else, we might get lucky in
+	//decoding a primitive type
+
 	if (TERMTYPE_START_TUPLE!=ts.type) {
 		DBGLOG(LOG_ERR, "egress_decode_prim: expecting 'start_tuple'");
-		return DBUS_TYPE_INVALID;
+		exit(EDBUS_DECODE_ERROR);
 	}
 
 	r=th->iter(&ts);
 	if (r) return 1;
 	if (TERMTYPE_ATOM!=ts.type) {
 		DBGLOG(LOG_ERR, "egress_decode_prim: expecting 'atom()'");
-		return DBUS_TYPE_INVALID;
+		exit(EDBUS_DECODE_ERROR);
 	}
 
-	r=egress_translate_etype((const char *)ts.Value.string);
+	dp->end_list=FALSE;
+	dp->end_packet=FALSE;
+	dp->dt=egress_translate_etype((const char *)ts.Value.string);
 	th->clean(&ts);
 
-	return r;
+	return 0;
 }//
 
 
