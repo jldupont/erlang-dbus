@@ -293,7 +293,7 @@ ingress_do_iter(TermHandler *th,
 	  case DBUS_TYPE_STRING: {
 		char *val;
 		dbus_message_iter_get_basic (iter, &val);
-		DBGLOG(LOG_INFO, "encoding string: %s", val);
+		//DBGLOG(LOG_INFO, "encoding string: %s", val);
 
 		result=ingress_encode_string(th, val);
 		DBGBEGIN
@@ -305,7 +305,7 @@ ingress_do_iter(TermHandler *th,
 	  case DBUS_TYPE_SIGNATURE: {
 		char *val;
 		dbus_message_iter_get_basic (iter, &val);
-		DBGLOG(LOG_INFO, "encoding sig: %s", val);
+		//DBGLOG(LOG_INFO, "encoding sig: %s", val);
 
 		result=ingress_encode_sig(th, val);
 		DBGBEGIN
@@ -317,7 +317,7 @@ ingress_do_iter(TermHandler *th,
 	  case DBUS_TYPE_OBJECT_PATH: {
 		char *val;
 		dbus_message_iter_get_basic (iter, &val);
-		DBGLOG(LOG_INFO, "encoding object path: %s", val);
+		//DBGLOG(LOG_INFO, "encoding object path: %s", val);
 
 		result=ingress_encode_op(th, val);
 		DBGBEGIN
@@ -455,7 +455,7 @@ ingress_do_iter(TermHandler *th,
 	  }
 
 	  case DBUS_TYPE_VARIANT: {
-		DBGLOG(LOG_INFO, "encoding VARIANT");
+		//DBGLOG(LOG_INFO, "encoding VARIANT");
 
 		ts.type=TERMTYPE_START_TUPLE;
 		ts.size=2;
@@ -479,7 +479,7 @@ ingress_do_iter(TermHandler *th,
 		break;
 	  }
 	  case DBUS_TYPE_ARRAY: {
-		DBGLOG(LOG_INFO, "encoding ARRAY");
+		//DBGLOG(LOG_INFO, "encoding ARRAY");
 		int current_type;
 		DBusMessageIter subiter;
 
@@ -518,7 +518,7 @@ ingress_do_iter(TermHandler *th,
 		break;
 	  }
 	  case DBUS_TYPE_DICT_ENTRY: {
-		DBGLOG(LOG_INFO, "encoding DICT");
+		//DBGLOG(LOG_INFO, "encoding DICT");
 		DBusMessageIter subiter;
 
 		dbus_message_iter_recurse (iter, &subiter);
@@ -553,7 +553,7 @@ ingress_do_iter(TermHandler *th,
 	  }
 
 	  case DBUS_TYPE_STRUCT: {
-		DBGLOG(LOG_INFO, "encoding STRUCT");
+		//DBGLOG(LOG_INFO, "encoding STRUCT");
 
 		int current_type;
 		DBusMessageIter subiter;

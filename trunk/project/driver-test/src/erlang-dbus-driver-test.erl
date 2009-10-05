@@ -50,7 +50,7 @@ send_ping(_, undefined) ->
 	pass;
 	
 send_ping(Port, Name) ->
-	Msg=[s, 666, Name, "", "org.freedesktop.DBus", "org.freedesktop.DBus.Peer",  "Ping"],
+	Msg=[s, 666, {Name}, {""}, {"org.freedesktop.DBus"}, {"org.freedesktop.DBus.Peer"},  {"Ping"}, {str, "Ping"}],
 	EMsg=erlang:term_to_binary(Msg),
 	erlang:port_command(Port, EMsg).
 
