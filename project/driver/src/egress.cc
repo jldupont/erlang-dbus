@@ -199,7 +199,12 @@ __egress_thread_function(void *conn) {
 
 		// FINALLY, send on the DBus
 		//r=egress_send(mh,)
-
+		if (!dbus_connection_send ((DBusConnection *)conn, dm, NULL)) {
+			DBGLOG(LOG_ERR, "egress: error sending message");
+			exit(EDBUS_SEND_ERROR);
+		}
+		dbus_connection_flush ((DBusConnection *) conn);
+		dbus_message_unref (dm);
 
 	} while(TRUE);
 
@@ -582,7 +587,7 @@ egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
 
 
 int
-egress_next_state(int cs, int tt) {
+egress_next_state(int tt) {
 
 	int ns;
 
@@ -732,7 +737,7 @@ egress_iter(TermIterator *ti, TermHandler *th, DBusMessageIter *iter) {
 				if ((TRUE==dp.end_packet) || (TRUE==dp.end_list))
 					return 0;
 
-				ti->state=egress_next_state(ti->state, dp.dt);
+				ti->state=egress_next_state(dp.dt);
 				break;
 
 			case TIS_START_DICT: {
