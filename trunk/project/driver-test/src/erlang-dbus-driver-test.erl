@@ -50,7 +50,7 @@ send_ping(_, undefined) ->
 	pass;
 	
 send_ping(Port, Name) ->
-	Msg=[s, 666, {Name}, {""}, {"org.freedesktop.DBus"}, {"org.freedesktop.DBus.Peer"},  {"Ping"}, {str, "Ping"}],
+	Msg=[m, 666, {Name}, {"org.freedesktop.DBus"}, {"/org/freedesktop/DBus"}, {"org.freedesktop.DBus.Peer"},  {"Ping"}, {str, "Ping"}],
 	EMsg=erlang:term_to_binary(Msg),
 	erlang:port_command(Port, EMsg).
 
@@ -60,13 +60,13 @@ handle_term({unique_name, Name}) ->
 	put(name, Name);
 
 handle_term(Term) ->
-	%io:format("Term: ~p~n", [Term]).
-	pass.
+	io:format("Term: ~p~n", [Term]).
+	%pass.
 
 
 
 start_drv() ->
-	Port = open_port({spawn, ?DRV++" type=\'signal\' type=\'error\'"}, [{packet, 4}, binary, exit_status]),
+	Port = open_port({spawn, ?DRV++" type=\'signal\' type=\'method_return\' type=\'error\'"}, [{packet, 4}, binary, exit_status]),
 	self() ! {port, Port}.	
 
 

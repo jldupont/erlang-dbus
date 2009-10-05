@@ -163,6 +163,7 @@ __egress_thread_function(void *conn) {
 	DBGLOG(LOG_INFO, "egress thread: starting");
 
 	do {
+		//DBGLOG(LOG_INFO, "egress thread: starting loop");
 
 		// Blocking
 		int r = ph->rx(&p);
@@ -195,20 +196,28 @@ __egress_thread_function(void *conn) {
 		DBusMessageIter iter;
 		dbus_message_iter_init_append (dm, &iter);
 
-		r=egress_iter(&ti, th, &iter);
-		egress_handle_code(r);    //this will exit if required
+		egress_iter(&ti, th, &iter);
+		//egress_handle_code(r);    //this will exit if required
 
 		//recycle the packet
 		p->clean();
 
 		// FINALLY, send on the DBus
-		//r=egress_send(mh,)
+		DBGLOG(LOG_INFO, "egress thread: about to send on DBus");
+
 		if (!dbus_connection_send ((DBusConnection *)conn, dm, NULL)) {
 			DBGLOG(LOG_ERR, "egress: error sending message");
 			exit(EDBUS_SEND_ERROR);
 		}
-		dbus_connection_flush ((DBusConnection *) conn);
+		DBGLOG(LOG_INFO, "egress thread: after send on DBus");
+
+		//dbus_connection_flush ((DBusConnection *) conn);
+
+		//DBGLOG(LOG_INFO, "egress thread: after flush");
+
 		dbus_message_unref (dm);
+
+		//DBGLOG(LOG_INFO, "egress thread: loop end");
 
 	} while(TRUE);
 
@@ -252,7 +261,7 @@ egress_translate_type(const char *type) {
 void
 egress_handle_code(int code) {
 
-	DBGLOG(LOG_ERR, "egress thread: error, msg: %s");
+	//DBGLOG(LOG_ERR, "egress thread: error, msg: %s");
 }//
 
 
@@ -286,7 +295,7 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 	}
 	mh->type=egress_translate_type((const char *) ts.Value.string);
 
-	DBGLOG(LOG_INFO, "egress decode header: type: %s", ts.Value.string);
+	DBGLOG(LOG_INFO, "egress decode header: type: %s  <%i>", ts.Value.string, mh->type);
 
 
 	// Next, we need the Serial info as an integer()
@@ -386,10 +395,6 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'path start tuple'");
 			return r;
 		}
-
-		DBGLOG(LOG_INFO, "egress_decode_header: path field type: %i", ts.type);
-		//r=th->iter(&ts);
-		//DBGLOG(LOG_INFO, "egress_decode_header: 2path result: %i field type: %i", r, ts.type);
 
 		if (TERMTYPE_START_TUPLE != ts.type) {
 			DBGLOG(LOG_ERR, "egress_decode_header: missing path start tuple");
@@ -522,6 +527,8 @@ egress_init_dbus_message(MessageHeader *mh) {
 	// we need Path, Interface & Member elements
 	case DBUS_MESSAGE_TYPE_SIGNAL:
 	case DBUS_MESSAGE_TYPE_METHOD_CALL:
+		DBGLOG(LOG_INFO, "egress_init_dbus_message: interface<%s> path<%s> member<%s>", mh->interface, mh->path, mh->member);
+
 		dbus_message_set_interface(dm, mh->interface);
 		dbus_message_set_path(dm, mh->path);
 		dbus_message_set_member(dm, mh->member);
