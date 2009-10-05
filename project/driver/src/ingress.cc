@@ -441,7 +441,7 @@ ingress_do_iter(TermHandler *th,
 	  case DBUS_TYPE_BOOLEAN: {
 		dbus_bool_t val;
 		dbus_message_iter_get_basic (iter, &val);
-		DBGLOG(LOG_INFO, "encoding bool: %i", val);
+		//DBGLOG(LOG_INFO, "encoding bool: %i", val);
 
 		if (!ingress_encode_tuple_start(th, "bo")) {
 			ts.type=TERMTYPE_ULONG;
