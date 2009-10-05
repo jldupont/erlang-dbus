@@ -388,6 +388,8 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 		}
 
 		DBGLOG(LOG_INFO, "egress_decode_header: path field type: %i", ts.type);
+		//r=th->iter(&ts);
+		//DBGLOG(LOG_INFO, "egress_decode_header: 2path result: %i field type: %i", r, ts.type);
 
 		if (TERMTYPE_START_TUPLE != ts.type) {
 			DBGLOG(LOG_ERR, "egress_decode_header: missing path start tuple");
@@ -404,6 +406,7 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 			return r;
 		}
 		mh->path = (const char *) ts.Value.string;
+		DBGLOG(LOG_INFO, "egress_decode_header: path: %s", ts.Value.string);
 		ts.Value.string = NULL;
 
 		// {Interface}
@@ -427,6 +430,7 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 			return r;
 		}
 		mh->interface = (const char *) ts.Value.string;
+		DBGLOG(LOG_INFO, "egress_decode_header: interface: %s", ts.Value.string);
 		ts.Value.string = NULL;
 
 		// {Member}
@@ -450,6 +454,7 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 			return r;
 		}
 		mh->member = (const char *) ts.Value.string;
+		DBGLOG(LOG_INFO, "egress_decode_header: member: %s", ts.Value.string);
 		ts.Value.string = NULL;
 		break;
 
