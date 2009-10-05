@@ -217,6 +217,16 @@ __egress_thread_function(void *conn) {
 
 		dbus_message_unref (dm);
 
+		// wait for the message to be sent... at least a bit
+		// If the timeout occurs and the message hasn't been sent,
+		// then (from what I understand of the DBus documentation)
+		// the message is anyhow queued and waiting for transmission...
+		// not ideal in the case of a timeout expiry since, most probably,
+		// the client wants its messages sent ASAP.
+		// Anyhow, the call below shouldn't block for all that long.
+		//dbus_connection_read_write_dispatch((DBusConnection *) conn, -1);
+
+
 		//DBGLOG(LOG_INFO, "egress thread: loop end");
 
 	} while(TRUE);

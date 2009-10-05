@@ -123,24 +123,6 @@ int main(int argc, char **argv) {
 
 	  dbus_error_init (&error);
 
-	  //int rr=dbus_bus_request_name(connection, "com.jldupont.dbus", 0, &error);
-	  //if (-1==rr) {
-	//	  DBGLOG(LOG_INFO, "request_name error: %s", error.message);
-	//	  exit(EDBUS_REGISTRATION_FAILED);
-	 // }
-
-	  // The following breaks big time!
-
-	  //const char *uniq_name = dbus_bus_get_unique_name(connection);
-	  //DBGLOG(LOG_INFO, "unique-name: %s", uniq_name);
-	  //paranoia
-	  //if (NULL==uniq_name) {
-	//		exit(EDBUS_INVALID_UNIQUE_NAME);
-	  //}
-
-
-
-
 	/*
 	 * Start 'egress' thread (if required)
 	 */
@@ -160,7 +142,7 @@ int main(int argc, char **argv) {
 	  /*
 	   *   MAIN LOOP  (ingress)
 	   */
-	  while (dbus_connection_read_write_dispatch(connection, -1));
+	  while (dbus_connection_read_write_dispatch(connection, 100));
 
 	  exit (EDBUS_OK);
 }//
