@@ -135,6 +135,8 @@ DBusMessage *egress_init_dbus_message(MessageHeader *mh);
 int egress_translate_etype(const char *tt);
 void egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt);
 int egress_decode_prim(TermHandler *th, DecodePrim *dp);
+void egress_message_header_init(MessageHeader *mh);
+void egress_message_header_clean(MessageHeader *mh);
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -159,6 +161,8 @@ __egress_thread_function(void *conn) {
 
 	MessageHeader mh;
 	DBusMessage   *dm;
+
+	egress_message_header_init(&mh);
 
 	DBGLOG(LOG_INFO, "egress thread: starting");
 
@@ -189,6 +193,9 @@ __egress_thread_function(void *conn) {
 			DBGLOG(LOG_ERR, "egress thread: can't create DBus message");
 			exit(EDBUS_CREATE_DBUSMSG_ERROR);
 		}
+
+		egress_message_header_clean(&mh);
+
 		TermIterator ti;
 		ti.state=TIS_START_PRIM;
 
@@ -211,21 +218,7 @@ __egress_thread_function(void *conn) {
 		}
 		DBGLOG(LOG_INFO, "egress thread: after send on DBus");
 
-		//dbus_connection_flush ((DBusConnection *) conn);
-
-		//DBGLOG(LOG_INFO, "egress thread: after flush");
-
 		dbus_message_unref (dm);
-
-		// wait for the message to be sent... at least a bit
-		// If the timeout occurs and the message hasn't been sent,
-		// then (from what I understand of the DBus documentation)
-		// the message is anyhow queued and waiting for transmission...
-		// not ideal in the case of a timeout expiry since, most probably,
-		// the client wants its messages sent ASAP.
-		// Anyhow, the call below shouldn't block for all that long.
-		//dbus_connection_read_write_dispatch((DBusConnection *) conn, -1);
-
 
 		//DBGLOG(LOG_INFO, "egress thread: loop end");
 
@@ -274,6 +267,26 @@ egress_handle_code(int code) {
 	//DBGLOG(LOG_ERR, "egress thread: error, msg: %s");
 }//
 
+void
+egress_message_header_init(MessageHeader *mh) {
+
+	mh->dest=NULL;
+	mh->sender=NULL;
+	mh->path=NULL;
+	mh->interface=NULL;
+	mh->member=NULL;
+	mh->name=NULL;
+}
+
+void egress_message_header_clean(MessageHeader *mh) {
+
+	if (NULL!=mh->dest)      { free((void*) mh->dest);      mh->dest=NULL; };
+	if (NULL!=mh->sender)    { free((void*) mh->sender);    mh->sender=NULL; };
+	if (NULL!=mh->path)      { free((void*) mh->path);      mh->path=NULL; };
+	if (NULL!=mh->interface) { free((void*) mh->interface); mh->interface=NULL; };
+	if (NULL!=mh->member)    { free((void*) mh->member);    mh->member=NULL; };
+	if (NULL!=mh->name)      { free((void*) mh->name);      mh->name=NULL; };
+}
 
 int
 egress_decode_header(TermHandler *th, MessageHeader *mh) {
@@ -311,12 +324,8 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 	// Next, we need the Serial info as an integer()
 	th->clean(&ts);
 	r=th->iter(&ts);
-	if (r) {
-		DBGLOG(LOG_ERR, "egress_decode_header: expecting 'serial'");
-		return r;
-	}
-	if (TERMTYPE_LONG != ts.type) {
-		DBGLOG(LOG_ERR, "egress_decode_header: missing integer(serial)");
+	if (r || (!r && (TERMTYPE_LONG!=ts.type))) {
+		DBGLOG(LOG_ERR, "egress_decode_header: expecting integer 'serial'");
 		return r;
 	}
 
@@ -326,25 +335,16 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 
 	//{Sender}
 	r=th->iter(&ts);
-	if (r) {
+	if (r || (!r && (TERMTYPE_START_TUPLE!=ts.type))) {
 		DBGLOG(LOG_ERR, "egress_decode_header: expecting 'sender start tuple'");
 		return r;
 	}
-	if (TERMTYPE_START_TUPLE != ts.type) {
-		DBGLOG(LOG_ERR, "egress_decode_header: missing sender start tuple");
-		return r;
-	}
-
 
 	// Next, we need the Sender info as an string()
 	th->clean(&ts);
 	r=th->iter(&ts);
-	if (r) {
-		DBGLOG(LOG_ERR, "egress_decode_header: expecting 'sender'");
-		return r;
-	}
-	if (TERMTYPE_STRING != ts.type) {
-		DBGLOG(LOG_ERR, "egress_decode_header: missing string(sender)");
+	if (r || (!r && (TERMTYPE_STRING!=ts.type))) {
+		DBGLOG(LOG_ERR, "egress_decode_header: expecting string 'sender'");
 		return r;
 	}
 	mh->sender = (const char *) ts.Value.string;
@@ -359,16 +359,10 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 
 	//{Destination}
 	r=th->iter(&ts);
-	if (r) {
+	if (r || (!r && (TERMTYPE_START_TUPLE != ts.type))) {
 		DBGLOG(LOG_ERR, "egress_decode_header: expecting 'destination start tuple'");
 		return r;
 	}
-
-	if (TERMTYPE_START_TUPLE != ts.type) {
-		DBGLOG(LOG_ERR, "egress_decode_header: missing destination start tuple");
-		return r;
-	}
-
 
 	// Next, we need the Destination info as an string()
 	r=th->iter(&ts);
@@ -401,23 +395,14 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 
 		//{Path}
 		r=th->iter(&ts);
-		if (r) {
+		if (r || (!r && (TERMTYPE_START_TUPLE != ts.type))) {
 			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'path start tuple'");
 			return r;
 		}
 
-		if (TERMTYPE_START_TUPLE != ts.type) {
-			DBGLOG(LOG_ERR, "egress_decode_header: missing path start tuple");
-			return r;
-		}
-
 		r=th->iter(&ts);
-		if (r) {
-			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'path'");
-			return r;
-		}
-		if (TERMTYPE_STRING != ts.type) {
-			DBGLOG(LOG_ERR, "egress_decode_header: missing string(path)");
+		if (r || (!r && (TERMTYPE_STRING != ts.type))) {
+			DBGLOG(LOG_ERR, "egress_decode_header: expecting string 'path'");
 			return r;
 		}
 		mh->path = (const char *) ts.Value.string;
@@ -426,22 +411,14 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 
 		// {Interface}
 		r=th->iter(&ts);
-		if (r) {
+		if (r || (!r && (TERMTYPE_START_TUPLE != ts.type))) {
 			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'interface start tuple'");
-			return r;
-		}
-		if (TERMTYPE_START_TUPLE != ts.type) {
-			DBGLOG(LOG_ERR, "egress_decode_header: missing interface start tuple");
 			return r;
 		}
 
 		r=th->iter(&ts);
-		if (r) {
-			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'interface'");
-			return r;
-		}
-		if (TERMTYPE_STRING != ts.type) {
-			DBGLOG(LOG_ERR, "egress_decode_header: missing string(interface)");
+		if (r || (!r && (TERMTYPE_STRING != ts.type))) {
+			DBGLOG(LOG_ERR, "egress_decode_header: expecting string'interface'");
 			return r;
 		}
 		mh->interface = (const char *) ts.Value.string;
@@ -450,22 +427,14 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 
 		// {Member}
 		r=th->iter(&ts);
-		if (r) {
+		if (r || (!r && (TERMTYPE_START_TUPLE != ts.type))) {
 			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'member start tuple'");
-			return r;
-		}
-		if (TERMTYPE_START_TUPLE != ts.type) {
-			DBGLOG(LOG_ERR, "egress_decode_header: missing member start tuple");
 			return r;
 		}
 
 		r=th->iter(&ts);
-		if (r) {
-			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'member'");
-			return r;
-		}
-		if (TERMTYPE_STRING != ts.type) {
-			DBGLOG(LOG_ERR, "egress_decode_header: missing string(member)");
+		if (r || (!r && (TERMTYPE_STRING != ts.type))) {
+			DBGLOG(LOG_ERR, "egress_decode_header: expecting string 'member'");
 			return r;
 		}
 		mh->member = (const char *) ts.Value.string;
@@ -484,21 +453,13 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 
 		// {Name}
 		r=th->iter(&ts);
-		if (r) {
+		if (r || (!r && (TERMTYPE_START_TUPLE != ts.type))) {
 			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'name start tuple'");
 			return r;
 		}
-		if (TERMTYPE_START_TUPLE != ts.type) {
-			DBGLOG(LOG_ERR, "egress_decode_header: missing name start tuple");
-			return r;
-		}
 		r=th->iter(&ts);
-		if (r) {
-			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'name'");
-			return r;
-		}
-		if (TERMTYPE_STRING != ts.type) {
-			DBGLOG(LOG_ERR, "egress_decode_header: missing string(name)");
+		if (r || (!r && (TERMTYPE_STRING != ts.type))) {
+			DBGLOG(LOG_ERR, "egress_decode_header: expecting string 'name'");
 			return r;
 		}
 		mh->name = (const char *) ts.Value.string;
