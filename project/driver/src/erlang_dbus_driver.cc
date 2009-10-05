@@ -141,6 +141,11 @@ int main(int argc, char **argv) {
 
 	  /*
 	   *   MAIN LOOP  (ingress)
+	   *
+	   *   There is certainly a better way of handling the main loop
+	   *   than what I have done here (just setting a 100ms timeout) but
+	   *   since I can't find suitable documentation at the moment,
+	   *   I am leaving this as it is until...
 	   */
 	  while (dbus_connection_read_write_dispatch(connection, 100));
 
