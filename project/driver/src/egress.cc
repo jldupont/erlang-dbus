@@ -160,6 +160,8 @@ __egress_thread_function(void *conn) {
 	MessageHeader mh;
 	DBusMessage   *dm;
 
+	DBGLOG(LOG_INFO, "egress thread: starting");
+
 	do {
 
 		// Blocking
@@ -168,6 +170,8 @@ __egress_thread_function(void *conn) {
 			DBGLOG(LOG_ERR, "egress thread: error, msg: %s", ph->strerror());
 			exit(EDBUS_RECEIVE_ERROR);
 		}
+
+		DBGLOG(LOG_INFO, "egress thread: received packet");
 
 		// before *any* iteration can be done
 		th->init(p);
@@ -207,6 +211,8 @@ __egress_thread_function(void *conn) {
 		dbus_message_unref (dm);
 
 	} while(TRUE);
+
+	DBGLOG(LOG_INFO, "egress thread: ending");
 
 	return NULL;
 }//

@@ -1,6 +1,17 @@
 %% Author: jldupont
 %% Created: 2009-10-01
-%% Description: 
+%% Description: DBus Monitor
+%
+%  Filter Match Rule
+%  =================
+% 
+%  sender=
+%  interface=
+%  member=
+%  path=
+%  destination
+%  type=
+%  
 -module(erlang_dbus_monitor).
 
 -define(TIMEOUT, 100).

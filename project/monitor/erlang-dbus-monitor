@@ -1,0 +1,5 @@
+#!/bin/bash
+#
+# @author: Jean-Lou Dupont
+#
+erl -run erlang_dbus_monitor start

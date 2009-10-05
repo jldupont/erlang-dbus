@@ -144,9 +144,9 @@ int main(int argc, char **argv) {
 	/*
 	 * Start 'egress' thread (if required)
 	 */
-	  //if (FALSE==noegress) {
-	//	  egress_init(connection);
-	  //}
+	 if (FALSE==noegress) {
+		  egress_init(connection);
+	 }
 
 
 	/*
