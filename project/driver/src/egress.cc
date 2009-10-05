@@ -129,7 +129,7 @@ typedef struct _DecodePrim {
 void *__egress_thread_function(void *conn);
 void egress_handle_code(int code);
 int  egress_translate_type(const char *type);
-int egress_decode_header(TermHandler *th, MessageHeader *mh);
+void egress_decode_header(TermHandler *th, MessageHeader *mh);
 int egress_iter(TermIterator *ti, TermHandler *th, DBusMessageIter *iter);
 DBusMessage *egress_init_dbus_message(MessageHeader *mh);
 int egress_translate_etype(const char *tt);
@@ -137,6 +137,7 @@ void egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt);
 int egress_decode_prim(TermHandler *th, DecodePrim *dp);
 void egress_message_header_init(MessageHeader *mh);
 void egress_message_header_clean(MessageHeader *mh);
+void egress_decode_tuple_string(TermHandler *th, const char **result);
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -181,11 +182,7 @@ __egress_thread_function(void *conn) {
 		// before *any* iteration can be done
 		th->init(p);
 
-		r=egress_decode_header(th, &mh);
-		if (r) {
-			DBGLOG(LOG_ERR, "egress thread: can't decode header");
-			exit(EDBUS_DECODE_HEADER_ERROR);
-		}
+		egress_decode_header(th, &mh);
 
 		// Init message to DBus
 		dm=egress_init_dbus_message(&mh);
@@ -239,19 +236,15 @@ egress_translate_type(const char *type) {
 	if (NULL==type) {
 		return DBUS_MESSAGE_TYPE_INVALID;
 	}
-
 	if (strcmp(type, ETYPE_METHOD_CALL)==0) {
 		return DBUS_MESSAGE_TYPE_METHOD_CALL;
 	}
-
 	if (strcmp(type, ETYPE_METHOD_RETURN)==0) {
 		return DBUS_MESSAGE_TYPE_METHOD_RETURN;
 	}
-
 	if (strcmp(type, ETYPE_SIGNAL)==0) {
 		return DBUS_MESSAGE_TYPE_SIGNAL;
 	}
-
 	if (strcmp(type, ETYPE_ERROR)==0) {
 		return DBUS_MESSAGE_TYPE_ERROR;
 	}
@@ -259,13 +252,6 @@ egress_translate_type(const char *type) {
 	return DBUS_MESSAGE_TYPE_INVALID;
 }//
 
-
-
-void
-egress_handle_code(int code) {
-
-	//DBGLOG(LOG_ERR, "egress thread: error, msg: %s");
-}//
 
 void
 egress_message_header_init(MessageHeader *mh) {
@@ -288,7 +274,7 @@ void egress_message_header_clean(MessageHeader *mh) {
 	if (NULL!=mh->name)      { free((void*) mh->name);      mh->name=NULL; };
 }
 
-int
+void
 egress_decode_header(TermHandler *th, MessageHeader *mh) {
 
 	TermStruct ts;
@@ -296,37 +282,27 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 	// First, we should be getting a "start list"
 	th->clean(&ts);
 	int r=th->iter(&ts);
-	if (r) {
+	if (r || (!r && (TERMTYPE_START_LIST != ts.type))) {
 		DBGLOG(LOG_ERR, "egress_decode_header: expecting 'start list'");
-		return r;
-	}
-	if (TERMTYPE_START_LIST != ts.type) {
-		DBGLOG(LOG_ERR, "egress_decode_header: missing 'start list'");
-		return r;
+		exit(EDBUS_DECODE_ERROR);
 	}
 
 	// Next, we need the MsgType as an atom()
-	th->clean(&ts);
 	r=th->iter(&ts);
-	if (r) {
+	if (r || (!r && (TERMTYPE_ATOM != ts.type))) {
 		DBGLOG(LOG_ERR, "egress_decode_header: expecting 'msg_type'");
-		return r;
-	}
-	if (TERMTYPE_ATOM != ts.type) {
-		DBGLOG(LOG_ERR, "egress_decode_header: missing atom(msg_type)");
-		return r;
+		exit(EDBUS_DECODE_ERROR);
 	}
 	mh->type=egress_translate_type((const char *) ts.Value.string);
 
 	DBGLOG(LOG_INFO, "egress decode header: type: %s  <%i>", ts.Value.string, mh->type);
-
 
 	// Next, we need the Serial info as an integer()
 	th->clean(&ts);
 	r=th->iter(&ts);
 	if (r || (!r && (TERMTYPE_LONG!=ts.type))) {
 		DBGLOG(LOG_ERR, "egress_decode_header: expecting integer 'serial'");
-		return r;
+		exit(EDBUS_DECODE_ERROR);
 	}
 
 	mh->serial = ts.Value.integer;
@@ -334,54 +310,11 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 	DBGLOG(LOG_INFO, "egress decode header: Serial: %i", ts.Value.integer);
 
 	//{Sender}
-	r=th->iter(&ts);
-	if (r || (!r && (TERMTYPE_START_TUPLE!=ts.type))) {
-		DBGLOG(LOG_ERR, "egress_decode_header: expecting 'sender start tuple'");
-		return r;
-	}
-
-	// Next, we need the Sender info as an string()
-	th->clean(&ts);
-	r=th->iter(&ts);
-	if (r || (!r && (TERMTYPE_STRING!=ts.type))) {
-		DBGLOG(LOG_ERR, "egress_decode_header: expecting string 'sender'");
-		return r;
-	}
-	mh->sender = (const char *) ts.Value.string;
-
-	DBGLOG(LOG_INFO, "egress decode header: Sender: %s", ts.Value.string);
-
-
-	// we don't want to 'clean' this term struct because we have
-	// transferred ownership of the string onto the MessageHeader structure.
-	ts.Value.string=NULL;
-
+	egress_decode_tuple_string(th, &(mh->sender));
+	DBGLOG(LOG_INFO, "egress decode header: Sender: %s", mh->sender);
 
 	//{Destination}
-	r=th->iter(&ts);
-	if (r || (!r && (TERMTYPE_START_TUPLE != ts.type))) {
-		DBGLOG(LOG_ERR, "egress_decode_header: expecting 'destination start tuple'");
-		return r;
-	}
-
-	// Next, we need the Destination info as an string()
-	r=th->iter(&ts);
-	if (r) {
-		DBGLOG(LOG_ERR, "egress_decode_header: expecting 'destination'");
-		return r;
-	}
-
-	//DBGLOG(LOG_INFO, "egress_decode_header: destination field type: %i", ts.type);
-
-	if ((TERMTYPE_STRING != ts.type) && (TERMTYPE_NIL!=ts.type)){
-		DBGLOG(LOG_ERR, "egress_decode_header: missing string(destination)");
-		return r;
-	}
-	mh->dest = (const char *) ts.Value.string;  // this can be NULL e.g. Signals
-
-	DBGLOG(LOG_INFO, "egress decode header: Destination: %s", ts.Value.string);
-
-	ts.Value.string=NULL;
+	egress_decode_tuple_string(th, &(mh->dest));
 
 	// ----------------------------------------------------------------------------
 	// COMMON PART END
@@ -394,78 +327,25 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 	case DBUS_MESSAGE_TYPE_METHOD_CALL:
 
 		//{Path}
-		r=th->iter(&ts);
-		if (r || (!r && (TERMTYPE_START_TUPLE != ts.type))) {
-			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'path start tuple'");
-			return r;
-		}
-
-		r=th->iter(&ts);
-		if (r || (!r && (TERMTYPE_STRING != ts.type))) {
-			DBGLOG(LOG_ERR, "egress_decode_header: expecting string 'path'");
-			return r;
-		}
-		mh->path = (const char *) ts.Value.string;
-		DBGLOG(LOG_INFO, "egress_decode_header: path: %s", ts.Value.string);
-		ts.Value.string = NULL;
+		egress_decode_tuple_string(th, &(mh->path));
 
 		// {Interface}
-		r=th->iter(&ts);
-		if (r || (!r && (TERMTYPE_START_TUPLE != ts.type))) {
-			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'interface start tuple'");
-			return r;
-		}
-
-		r=th->iter(&ts);
-		if (r || (!r && (TERMTYPE_STRING != ts.type))) {
-			DBGLOG(LOG_ERR, "egress_decode_header: expecting string'interface'");
-			return r;
-		}
-		mh->interface = (const char *) ts.Value.string;
-		DBGLOG(LOG_INFO, "egress_decode_header: interface: %s", ts.Value.string);
-		ts.Value.string = NULL;
+		egress_decode_tuple_string(th, &(mh->interface));
 
 		// {Member}
-		r=th->iter(&ts);
-		if (r || (!r && (TERMTYPE_START_TUPLE != ts.type))) {
-			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'member start tuple'");
-			return r;
-		}
-
-		r=th->iter(&ts);
-		if (r || (!r && (TERMTYPE_STRING != ts.type))) {
-			DBGLOG(LOG_ERR, "egress_decode_header: expecting string 'member'");
-			return r;
-		}
-		mh->member = (const char *) ts.Value.string;
-		DBGLOG(LOG_INFO, "egress_decode_header: member: %s", ts.Value.string);
-		ts.Value.string = NULL;
+		egress_decode_tuple_string(th, &(mh->member));
 		break;
-
 
 	// complete header already
 	case DBUS_MESSAGE_TYPE_METHOD_RETURN:
 		break;
 
-
 	// we still need the "Name" element
 	case DBUS_MESSAGE_TYPE_ERROR:
 
 		// {Name}
-		r=th->iter(&ts);
-		if (r || (!r && (TERMTYPE_START_TUPLE != ts.type))) {
-			DBGLOG(LOG_ERR, "egress_decode_header: expecting 'name start tuple'");
-			return r;
-		}
-		r=th->iter(&ts);
-		if (r || (!r && (TERMTYPE_STRING != ts.type))) {
-			DBGLOG(LOG_ERR, "egress_decode_header: expecting string 'name'");
-			return r;
-		}
-		mh->name = (const char *) ts.Value.string;
-		ts.Value.string = NULL;
+		egress_decode_tuple_string(th, &(mh->name));
 		break;
-
 
 	// fail fast!
 	default:
@@ -475,10 +355,33 @@ egress_decode_header(TermHandler *th, MessageHeader *mh) {
 		break;
 
 	}//switch
+}//
 
+/**
+ * Expects to decode a string() inside a tuple()
+ *
+ * Fail fast
+ */
+void
+egress_decode_tuple_string(TermHandler *th, const char **result) {
 
-	// all went well!
-	return 0;
+	TermStruct ts;
+
+	// {
+	int r=th->iter(&ts);
+	if (r || (!r && (TERMTYPE_START_TUPLE!=ts.type))) {
+		DBGLOG(LOG_ERR, "egress_decode_tuple_string: expecting start tuple");
+		exit(EDBUS_DECODE_ERROR);
+	}
+
+	// {string()}
+	th->clean(&ts);
+	r=th->iter(&ts);
+	if (r || (!r && (TERMTYPE_STRING!=ts.type))) {
+		DBGLOG(LOG_ERR, "egress_decode_tuple_string: expecting string");
+		exit(EDBUS_DECODE_ERROR);
+	}
+	*result = (const char *) ts.Value.string;
 }//
 
 
@@ -953,4 +856,4 @@ egress_translate_etype(const char *tt) {
 	if (strcmp(tt, ETYPE_STRUCT)==0) return DBUS_TYPE_STRUCT;
 
 	return DBUS_TYPE_INVALID;
-}
+}//
