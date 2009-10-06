@@ -162,6 +162,8 @@ __egress_thread_function(void *conn) {
 
 	MessageHeader mh;
 	DBusMessage   *dm;
+	TermIterator ti;
+	DBusMessageIter iter;
 
 	egress_message_header_init(&mh);
 
@@ -182,6 +184,7 @@ __egress_thread_function(void *conn) {
 		// before *any* iteration can be done
 		th->init(p);
 
+		// fail fast if something wrong
 		egress_decode_header(th, &mh);
 
 		// Init message to DBus
@@ -193,15 +196,11 @@ __egress_thread_function(void *conn) {
 
 		egress_message_header_clean(&mh);
 
-		TermIterator ti;
-		ti.state=TIS_START_PRIM;
-
 		// start iterating & translating
-		DBusMessageIter iter;
 		dbus_message_iter_init_append (dm, &iter);
 
+		ti.state=TIS_START_PRIM;
 		egress_iter(&ti, th, &iter);
-		//egress_handle_code(r);    //this will exit if required
 
 		//recycle the packet
 		p->clean();
@@ -382,6 +381,7 @@ egress_decode_tuple_string(TermHandler *th, const char **result) {
 		exit(EDBUS_DECODE_ERROR);
 	}
 	*result = (const char *) ts.Value.string;
+
 }//
 
 

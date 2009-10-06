@@ -57,7 +57,6 @@
 #include "erlang_dbus_driver.h"
 #include "ingress.h"
 #include "egress.h"
-#include "queue.h"
 
 
 // Prototypes
