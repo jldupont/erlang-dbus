@@ -1,5 +1,5 @@
 %%% -------------------------------------------------------------------
-%%% Author  : jldupont
+%%% Author  : Jean-Lou Dupont
 %%% Description :
 %%%
 %%% Created : 2009-10-06
@@ -16,15 +16,6 @@
 				,drvport
 			    ,debug
 			   }).
-
-%% ====================================================================
-%% External functions
-%% ====================================================================
-
-
-%% ====================================================================
-%% Server functions
-%% ====================================================================
 
 %% --------------------------------------------------------------------
 %% Function: init/1
@@ -68,9 +59,29 @@ handle_cast(Msg, State) when State#state.drvport =/= undefined ->
 
 
 
-%% @private 
-handle_info(_Info, State) ->
+%% @doc Port Data Reception
+%%
+%% @private
+handle_info({_Port, {data, Data}}, State) ->
+	Msg=erlang:binary_to_term(Data),
+	dmsg(State, "Msg: ~p", [Msg]),
+    {noreply, State};
+
+%% @doc Port driver crashed 
+%%
+%% @private
+handle_info({_Port, {exit_status, Reason}}, State) ->
+	dmsg(State, "Driver crashed, Reason: ~p", [Reason]),
+    {noreply, State#state{drvport=undefined}};
+
+
+%% @doc Catch-all
+%%
+%% @private
+handle_info(Info, State) ->
+	dmsg(State, "Info: ~p", [Info]),
     {noreply, State}.
+
 
 %% @private
 handle_call(_Request, _From, State) ->
@@ -98,13 +109,13 @@ code_change(_OldVsn, State, _Extra) ->
 %% --------------------------------------------------------------------
 
 dmsg(State, Msg) when State#state.debug==true ->
-	io:format(Msg);
+	io:format(Msg++"~n");
 
 dmsg(_State, _Msg) ->
 	ok.
 
 dmsg(State, Msg, Params) when State#state.debug==true ->
-	io:format(Msg, Params);
+	io:format(Msg++"~n", Params);
 
 dmsg(_State, _Msg, _Params) ->
 	ok.
