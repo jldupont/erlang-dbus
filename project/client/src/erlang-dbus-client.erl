@@ -59,7 +59,7 @@ init(debug) ->
 %%	List=[string()]
 %%
 subscribe_signals(List) when is_list(List) ->
-	ok.
+	safe_send_to_server({subscribe_signals, List}).
 
 
 %% @doc Registers a "Name" with DBus
@@ -69,7 +69,7 @@ subscribe_signals(List) when is_list(List) ->
 %%	Name=string()
 %%
 register_name(Name) when is_list(Name) ->
-	ok.
+	safe_send_to_server({register, Name}).
 
 %% @doc Sends a "Method Call" message
 %%
