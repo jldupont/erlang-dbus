@@ -152,7 +152,8 @@ real_init(Drv, Debug) ->
 	Result=?TOOLS:find_driver(Drv),
 	case Result of
 		{ok, Filename} ->
-			gen_server:start_link({local, ?SERVER}, ?SERVER_MOD, [{drv, Filename}, {debug, Debug}], []);
+			gen_server:start_link({local, ?SERVER}, ?SERVER_MOD, [{drv, Filename}, {debug, Debug}], []),
+			gen_server:cast(?SERVER, {api, init});
 		_ ->
 			{error, driver_not_found}
 	end.

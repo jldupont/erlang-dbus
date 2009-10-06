@@ -15,8 +15,12 @@
 -record(state, {drvpath 
 				,drvport
 			    ,debug
-			   ,name
+			   ,uname
 			   }).
+
+%% NOTE: MUST BE IN-SYNC with 'dbus-shared.h'
+%% *****
+-define(DBUS_NAME_FLAG_DO_NOT_QUEUE, 4).
 
 %% --------------------------------------------------------------------
 %% Function: init/1
@@ -49,26 +53,37 @@ handle_cast(stop, State) ->
 handle_cast({api, Msg}, State) when State#state.drvport == undefined ->
 	dmsg(State, "> Starting Port"),
 	Drv=State#state.drvpath,
+	UName=State#state.uname,
 	Port = open_port({spawn, Drv++" type=\'signal\' type=\'method_return\' type=\'error\'"}, [{packet, 4}, binary, exit_status]),
-	api(Port, Msg),
+	api(Port, UName, Msg),
     {noreply, State#state{drvport=Port}};
 
 
 handle_cast({api, Msg}, State) when State#state.drvport =/= undefined ->
 	Port=State#state.drvport,
+	UName=State#state.uname,
 	dmsg(State, "> Msg: ~p ... Port: ~p~n", [Msg, Port]),
-	api(Port, Msg),
+	api(Port, UName, Msg),
     {noreply, State}.
 
 
-api(Port, {register, Name}) ->
-	Uncoded=[m, 0],
+api(Port, UName, init) ->
+	io:format("* Init ~n");
+
+api(Port, UName, {register, Name}) ->
+	io:format("* Register: UName: ~p  Name: ~p", [UName, Name]),
+	Uncoded=[m, 0, {UName}, {"org.freedesktop.DBus"}, 
+			 {"/org/freedesktop/DBus"}, 
+			 {"org.freedesktop.DBus"}, 
+			 {"RequestName"}, 
+			 {str, Name}, 
+			 {ui32, ?DBUS_NAME_FLAG_DO_NOT_QUEUE}],
 	Coded=erlang:term_to_binary(Uncoded),
 	%% @TODO make safe...
 	erlang:port_command(Port, Coded);
 	
 
-api(_Port, Msg) ->
+api(_Port, UName, Msg) ->
 	dmsg("api: unsupported msg: ~p", [Msg]),
 	ok.
 
@@ -104,7 +119,7 @@ handle_info(Info, State) ->
 
 hmsg(State, {unique_name, Name}) ->
 	dmsg(State, "** Name: ~p", [Name]),
-	State#state{name=Name};
+	State#state{uname=Name};
 
 
 hmsg(State, Msg) ->
@@ -152,3 +167,28 @@ dmsg(State, Msg, Params) when State#state.debug==true ->
 
 dmsg(_State, _Msg, _Params) ->
 	ok.
+
+
+%% @doc Translate port driver exit status code
+%%		to human readable format 
+%%		NOTE: should be in-sync with 'erlang_dbus_driver.h'
+%%
+code(0)  -> "EDBUS_OK";
+code(1)  -> "EDBUS_CONN_ERROR";
+code(2)  -> "EDBUS_DISCONNECTED";
+code(3)  -> "EDBUS_ADD_MATCH_ERROR";
+code(4)  -> "EDBUS_ADD_FILTER_ERROR";
+code(5)  -> "EDBUS_INIT_MESSAGE";
+code(6)  -> "EDBUS_SEND_ERROR";
+code(7)  -> "EDBUS_UNSUPPORTED_TYPE";
+code(8)  -> "EDBUS_UNRECOVERABLE_ERROR";
+code(9)  -> "EDBUS_INVALID_UNIQUE_NAME";
+code(10) -> "EDBUS_ERROR_SENDING_UNIQ";
+code(11) -> "EDBUS_REGISTRATION_FAILED";
+code(12) -> "EDBUS_RECEIVE_ERROR";
+code(13) -> "EDBUS_DECODE_HEADER_ERROR";
+code(14) -> "EDBUS_MALLOC_ERROR";
+code(15) -> "EDBUS_CREATE_DBUSMSG_ERROR";
+code(16) -> "EDBUS_UNKNOWN_EGRESS_STATE";
+code(17) -> "EDBUS_DECODE_ERROR";
+code(_)  -> "UNKNOWN".
