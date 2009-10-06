@@ -111,6 +111,17 @@ send(error, Serial, Destination, Name, Message) ->
 %% ------------------------------------------------- Local Functions
 %%
 do_init(Debug) ->
+	maybe_init(Debug).
+
+maybe_init(debug) ->
+	real_init(?DRV_DEBUG);
+
+maybe_init(_) ->
+	real_init(?DRV).
+
+real_init(Drv) ->
 	ok.
+
+
 
 
