@@ -13,9 +13,11 @@
 %%
 %% ============================================= DEFINES
 %%
--define(DRV,       "erlang-dbus-driver").
--define(DRV_DEBUG, "erlang-dbus-driver_debug").
-
+-define(DRV,        "erlang-dbus-driver").
+-define(DRV_DEBUG,  "erlang-dbus-driver_debug").
+-define(SERVER,     edbus).
+-define(SERVER_MOD, 'erlang-dbus-client-server').
+-define(TOOLS,      'erlang-dbus-client-tools').
 
 %%
 %% ============================================= EXPORTED API
@@ -67,7 +69,7 @@ register_name(Name) when is_list(Name) ->
 
 %% @doc Sends a "Method Call" message
 %%
-%% @spec send_method({Serial, Destination, Path, Interface, Member, Message}) -> ok
+%% @spec send_method({Serial, Destination, Path, Interface, Member, Message}) -> ok | error
 %% where
 %%	Serial=integer()
 %%	Destination=string()
@@ -77,11 +79,11 @@ register_name(Name) when is_list(Name) ->
 %%	Message=term()
 %%
 send_method({Serial, Destination, Path, Interface, Member, Message}) ->
-	ok.
+	safe_send_to_server({method, Serial, Destination, Path, Interface, Member, Message}).
 
 %% @doc Sends a "Signal" message
 %%
-%% @spec send_signal({Serial, Destination, Path, Interface, Member, Message}) -> ok
+%% @spec send_signal({Serial, Destination, Path, Interface, Member, Message}) -> ok | error
 %% where
 %%	Serial=integer()
 %%	Destination=string()
@@ -91,22 +93,22 @@ send_method({Serial, Destination, Path, Interface, Member, Message}) ->
 %%	Message=term()
 %%
 send_signal({Serial, Destination, Path, Interface, Member, Message}) ->
-	ok.
+	safe_send_to_server({signal, Serial, Destination, Path, Interface, Member, Message}).
 
 %% @doc Sends a "Method Return" message
 %%
-%% @spec send_return({Serial, Destination, Message}) -> ok
+%% @spec send_return({Serial, Destination, Message}) -> ok | error
 %% where
 %%	Serial=integer()
 %%	Destination=string()
 %%	Message=term()
 %%
 send_return({Serial, Destination, Message}) ->
-	ok.
+	safe_send_to_server({return, Serial, Destination, Message}).
 
 %% @doc Sends a "Error" message
 %%
-%% @spec send_error({Serial, Destination, Name, Message}) -> ok
+%% @spec send_error({Serial, Destination, Name, Message}) -> ok | error
 %% where
 %%	Serial=integer()
 %%	Destination=string()
@@ -114,23 +116,43 @@ send_return({Serial, Destination, Message}) ->
 %%	Message=term()
 %%
 send_error({Serial, Destination, Name, Message}) ->
-	ok.
+	safe_send_to_server({error, Serial, Destination, Name, Message}).
 
 
 %%
 %% ------------------------------------------------- Local Functions
 %%
+
+%% @private
+safe_send_to_server(Message) ->
+	try
+		gen_server:cast(?SERVER, {api, Message})
+	catch
+		_:_ -> error
+	end.
+	
+%% @private
 do_init(Debug) ->
 	maybe_init(Debug).
 
+%% @private
 maybe_init(debug) ->
 	real_init(?DRV_DEBUG);
 
+%% @private
 maybe_init(_) ->
 	real_init(?DRV).
 
+%% @private
 real_init(Drv) ->
-	ok.
+	Result=?TOOLS:find_driver(Drv),
+	case Result of
+		{ok, Filename} ->
+			gen_server:start_link({local, ?SERVER}, ?SERVER_MOD, [{drv, Filename}], []);
+		_ ->
+			{error, driver_not_found}
+	end.
+
 
 
 
