@@ -15,6 +15,7 @@
 -record(state, {drvpath 
 				,drvport
 			    ,debug
+			   ,name
 			   }).
 
 %% --------------------------------------------------------------------
@@ -28,6 +29,8 @@
 init([{drv, Drv}, {debug, Debug}]) ->
 	io:format("server: drv: ~p", [Drv]),
     {ok, #state{drvpath=Drv, debug=Debug}}.
+
+
 
 %% --------------------------------------------------------------------
 %% Function: handle_cast/2
@@ -43,18 +46,34 @@ handle_cast(stop, State) ->
     {stop, normal, State};
 
 
-handle_cast(Msg, State) when State#state.drvport == undefined ->
+handle_cast({api, Msg}, State) when State#state.drvport == undefined ->
 	dmsg(State, "> Starting Port"),
 	Drv=State#state.drvpath,
 	Port = open_port({spawn, Drv++" type=\'signal\' type=\'method_return\' type=\'error\'"}, [{packet, 4}, binary, exit_status]),
+	api(Port, Msg),
     {noreply, State#state{drvport=Port}};
 
 
-handle_cast(Msg, State) when State#state.drvport =/= undefined ->
+handle_cast({api, Msg}, State) when State#state.drvport =/= undefined ->
 	Port=State#state.drvport,
 	dmsg(State, "> Msg: ~p ... Port: ~p~n", [Msg, Port]),
+	api(Port, Msg),
     {noreply, State}.
 
+
+api(Port, {register, Name}) ->
+	Uncoded=[m, 0],
+	Coded=erlang:term_to_binary(Uncoded),
+	%% @TODO make safe...
+	erlang:port_command(Port, Coded);
+	
+
+api(_Port, Msg) ->
+	dmsg("api: unsupported msg: ~p", [Msg]),
+	ok.
+
+
+	
 
 
 
@@ -64,8 +83,8 @@ handle_cast(Msg, State) when State#state.drvport =/= undefined ->
 %% @private
 handle_info({_Port, {data, Data}}, State) ->
 	Msg=erlang:binary_to_term(Data),
-	dmsg(State, "Msg: ~p", [Msg]),
-    {noreply, State};
+	NewState=hmsg(State, Msg),
+    {noreply, NewState};
 
 %% @doc Port driver crashed 
 %%
@@ -74,13 +93,27 @@ handle_info({_Port, {exit_status, Reason}}, State) ->
 	dmsg(State, "Driver crashed, Reason: ~p", [Reason]),
     {noreply, State#state{drvport=undefined}};
 
-
 %% @doc Catch-all
 %%
 %% @private
 handle_info(Info, State) ->
 	dmsg(State, "Info: ~p", [Info]),
     {noreply, State}.
+
+
+
+hmsg(State, {unique_name, Name}) ->
+	dmsg(State, "** Name: ~p", [Name]),
+	State#state{name=Name};
+
+
+hmsg(State, Msg) ->
+	dmsg(State, "Msg: ~p", [Msg]),
+	State.
+
+
+
+
 
 
 %% @private

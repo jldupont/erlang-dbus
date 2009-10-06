@@ -169,5 +169,10 @@ t1() ->
 	?MODULE:init(debug).
 
 t1(stop) ->
-	gen_server:cast(?SERVER, stop).
+	gen_server:cast(?SERVER, stop);
+
+t1(reg) ->
+	?MODULE:register_name("erlang_dbus_client").
+
+
 
