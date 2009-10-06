@@ -1,0 +1,2 @@
+{packages,[]}.
+{modules,['erlang-dbus-client','erlang-dbus-client-tools']}.
