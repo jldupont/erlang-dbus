@@ -33,6 +33,10 @@
 		,send_error/1
 		 ]).
 
+-export([
+		 t1/0, t1/1
+		 ]).
+
 %%
 %% ============================================= API Functions
 %%
@@ -137,18 +141,18 @@ do_init(Debug) ->
 
 %% @private
 maybe_init(debug) ->
-	real_init(?DRV_DEBUG);
+	real_init(?DRV_DEBUG, true);
 
 %% @private
 maybe_init(_) ->
-	real_init(?DRV).
+	real_init(?DRV, false).
 
 %% @private
-real_init(Drv) ->
+real_init(Drv, Debug) ->
 	Result=?TOOLS:find_driver(Drv),
 	case Result of
 		{ok, Filename} ->
-			gen_server:start_link({local, ?SERVER}, ?SERVER_MOD, [{drv, Filename}], []);
+			gen_server:start_link({local, ?SERVER}, ?SERVER_MOD, [{drv, Filename}, {debug, Debug}], []);
 		_ ->
 			{error, driver_not_found}
 	end.
@@ -156,4 +160,14 @@ real_init(Drv) ->
 
 
 
+%%
+%% ------------------------------------------------- Test Functions
+%%
+
+
+t1() ->
+	?MODULE:init(debug).
+
+t1(stop) ->
+	gen_server:cast(?SERVER, stop).
 
