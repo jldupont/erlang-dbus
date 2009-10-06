@@ -2,8 +2,40 @@
 %% Created: 2009-10-06
 %% Description: Tools
 -module('erlang-dbus-client-tools').
-
+-include_lib("kernel/include/file.hrl").
 -compile(export_all).
+
+
+
+%% @doc Finds the specified file in a restricted
+%%		set of paths
+%%
+%%		Starts by 
+%%
+find_file(Name) ->
+	Filename=code:which(?MODULE),
+	ModuleDirname=filename:dirname(Filename),
+	DriverPath1=filename:absname_join(ModuleDirname, "../driver"),
+	DriverPath2=filename:absname_join(ModuleDirname, "../../driver/Debug"),
+	DriverPath3=filename:absname_join(ModuleDirname, "../../driver/Release"),
+	find_file([DriverPath1, DriverPath2, DriverPath3], Name).
+
+find_file([], _Name) ->
+	{error, not_found};
+
+find_file([Path|Rest], Name) ->
+	FilePath=Path++"/"++Name,
+	Result=file:read_file_info(FilePath),
+	case Result of
+		{ok, _FileInfo} ->
+			{ok, FilePath};
+		
+		_ ->
+			find_file(Rest, Name)
+	end.
+
+	
+
 
 
 %% @doc Very permissive pattern based filter
@@ -135,3 +167,13 @@ addvar(_,_) ->
 
 addvar(Var, undefined, Count) -> put(Var, Count);
 addvar(Var, Value, Count)     -> put(Var, Value+Count).
+
+
+%% ------------------------------------------------------------------- TESTS
+
+t1() ->
+	Result=find_file("erlang-dbus-driver_debug"),
+	io:format("~p", [Result]).
+
+
+
