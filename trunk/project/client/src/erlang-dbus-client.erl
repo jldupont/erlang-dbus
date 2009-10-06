@@ -54,26 +54,33 @@ init(debug) ->
 
 %% @doc Subscribe a Client to a list of Signals
 %%
-%% @spec subscribe_signals(List) -> ok
+%% @spec subscribe_signals(List) -> ok | {error, Reason}
 %% where 
 %%	List=[string()]
 %%
 subscribe_signals(List) when is_list(List) ->
-	safe_send_to_server({subscribe_signals, List}).
+	safe_send_to_server({subscribe_signals, List});
+
+subscribe_signals(_) ->
+	{error, invalid.parameter}.
 
 
 %% @doc Registers a "Name" with DBus
 %%
-%% @spec register_name(Name) -> ok
+%% @spec register_name(Name) -> ok | {error, Reason}
 %% where
 %%	Name=string()
 %%
 register_name(Name) when is_list(Name) ->
-	safe_send_to_server({register, Name}).
+	safe_send_to_server({register, Name});
+
+register_name(_) ->
+	{error, invalid.parameter}.
+
 
 %% @doc Sends a "Method Call" message
 %%
-%% @spec send_method({Serial, Destination, Path, Interface, Member, Message}) -> ok | error
+%% @spec send_method({Serial, Destination, Path, Interface, Member, Message}) -> ok | {error, Reason}
 %% where
 %%	Serial=integer()
 %%	Destination=string()
@@ -83,11 +90,15 @@ register_name(Name) when is_list(Name) ->
 %%	Message=term()
 %%
 send_method({Serial, Destination, Path, Interface, Member, Message}) ->
-	safe_send_to_server({method, Serial, Destination, Path, Interface, Member, Message}).
+	safe_send_to_server({method, Serial, Destination, Path, Interface, Member, Message});
+
+send_method(_) ->
+	{error, invalid.parameter}.
+
 
 %% @doc Sends a "Signal" message
 %%
-%% @spec send_signal({Serial, Destination, Path, Interface, Member, Message}) -> ok | error
+%% @spec send_signal({Serial, Destination, Path, Interface, Member, Message}) -> ok | {error, Reason}
 %% where
 %%	Serial=integer()
 %%	Destination=string()
@@ -97,22 +108,29 @@ send_method({Serial, Destination, Path, Interface, Member, Message}) ->
 %%	Message=term()
 %%
 send_signal({Serial, Destination, Path, Interface, Member, Message}) ->
-	safe_send_to_server({signal, Serial, Destination, Path, Interface, Member, Message}).
+	safe_send_to_server({signal, Serial, Destination, Path, Interface, Member, Message});
+
+send_signal(_) ->
+	{error, invalid.parameter}.
+
 
 %% @doc Sends a "Method Return" message
 %%
-%% @spec send_return({Serial, Destination, Message}) -> ok | error
+%% @spec send_return({Serial, Destination, Message}) -> ok | {error, Reason}
 %% where
 %%	Serial=integer()
 %%	Destination=string()
 %%	Message=term()
 %%
 send_return({Serial, Destination, Message}) ->
-	safe_send_to_server({return, Serial, Destination, Message}).
+	safe_send_to_server({return, Serial, Destination, Message});
+
+send_return(_) ->
+	{error, invalid.parameter}.
 
 %% @doc Sends a "Error" message
 %%
-%% @spec send_error({Serial, Destination, Name, Message}) -> ok | error
+%% @spec send_error({Serial, Destination, Name, Message}) -> ok | {error, Reason}
 %% where
 %%	Serial=integer()
 %%	Destination=string()
@@ -120,8 +138,10 @@ send_return({Serial, Destination, Message}) ->
 %%	Message=term()
 %%
 send_error({Serial, Destination, Name, Message}) ->
-	safe_send_to_server({error, Serial, Destination, Name, Message}).
+	safe_send_to_server({error, Serial, Destination, Name, Message});
 
+send_error(_) ->
+	{error, invalid.parameter}.
 
 %%
 %% ------------------------------------------------- Local Functions

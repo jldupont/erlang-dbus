@@ -141,25 +141,24 @@ hmsg(State, Msg) ->
 	State.
 
 
-
-do_subscribe_signals(Port, UName, []) ->
+%% @private
+do_subscribe_signals(_Port, _UName, []) ->
 	finished;
 
 do_subscribe_signals(Port, UName, [Signal|Rest]) ->
-	Coded=prepDbusMethod(UName, "AddMatch", []),
+	Coded=prep_dbus_method(UName, "AddMatch", ["type=\'signal\' interface=\'"++Signal++"\'"]),
 	erlang:port_command(Port, Coded),
 	do_subscribe_signals(Port, UName, Rest).	
 
 
 
 	
-prepDbusMethod(UName, Member, Params) ->
-	Uncoded=[m, 0, {UName}, {"org.freedesktop.DBus"}, 
+prep_dbus_method(UName, Member, Params) ->
+	Raw=[m, 0, {UName}, {"org.freedesktop.DBus"}, 
 			 {"/org/freedesktop/DBus"}, 
 			 {"org.freedesktop.DBus"}, 
-			 {Member},
-			 Params], 
-	erlang:term_to_binary(Uncoded).
+			 {Member}]++Params,
+	erlang:term_to_binary(Raw).
 	
 
 
