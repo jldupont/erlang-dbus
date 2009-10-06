@@ -452,7 +452,7 @@ egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
 		exit(EDBUS_DECODE_ERROR);
 	}//=============================
 
-	DBGLOG(LOG_INFO, "egress_append_prim: type: %i", tt);
+	DBGLOG(LOG_INFO, "egress_append_prim: expected type: %i -- received type: %i", tt, ts.type);
 
 	switch(tt) {
 	case DBUS_TYPE_BYTE: {
@@ -478,7 +478,7 @@ egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
 		break;
 	}
 	case DBUS_TYPE_INT16: {
-		if (TERMTYPE_LONG==ts.type) {
+		if (TERMTYPE_LONG==ts.type || TERMTYPE_ULONG==ts.type) {
 			dbus_int16_t int16 = (dbus_int16_t) ts.Value.integer;
 			dbus_message_iter_append_basic (iter, DBUS_TYPE_INT16, &int16);
 			DBGLOG(LOG_INFO, "egress_append_prim: int16: %i", int16);
@@ -489,7 +489,7 @@ egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
 		break;
 	}
 	case DBUS_TYPE_UINT16: {
-		if (TERMTYPE_ULONG==ts.type) {
+		if (TERMTYPE_LONG==ts.type || TERMTYPE_ULONG==ts.type) {
 			dbus_uint16_t uint16 = (dbus_uint16_t) ts.Value.uinteger;
 			dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT16, &uint16);
 			DBGLOG(LOG_INFO, "egress_append_prim: uint16: %i", uint16);
@@ -500,7 +500,7 @@ egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
 		break;
 	}
 	case DBUS_TYPE_INT32: {
-		if (TERMTYPE_LONG==ts.type) {
+		if (TERMTYPE_LONG==ts.type || TERMTYPE_ULONG==ts.type) {
 			dbus_int32_t int32 = (dbus_int32_t) ts.Value.integer;
 			dbus_message_iter_append_basic (iter, DBUS_TYPE_INT32, &int32);
 			DBGLOG(LOG_INFO, "egress_append_prim: int32: %i", int32);
@@ -511,7 +511,7 @@ egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
 		break;
 	}
 	case DBUS_TYPE_UINT32: {
-		if (TERMTYPE_ULONG==ts.type) {
+		if (TERMTYPE_LONG==ts.type || TERMTYPE_ULONG==ts.type) {
 			dbus_uint32_t uint32 = (dbus_uint32_t) ts.Value.uinteger;
 			dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT32, &uint32);
 			DBGLOG(LOG_INFO, "egress_append_prim: uint32: %i", uint32);
@@ -522,7 +522,7 @@ egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
 		break;
 	}
 	case DBUS_TYPE_INT64: {
-		if (TERMTYPE_LONGLONG==ts.type) {
+		if (TERMTYPE_LONGLONG==ts.type || TERMTYPE_ULONGLONG==ts.type) {
 			dbus_int64_t int64 = (dbus_int64_t) ts.Value.linteger;
 			dbus_message_iter_append_basic (iter, DBUS_TYPE_INT64, &int64);
 			DBGLOG(LOG_INFO, "egress_append_prim: int64: %i", int64);
@@ -533,7 +533,7 @@ egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
 		break;
 	}
 	case DBUS_TYPE_UINT64: {
-		if (TERMTYPE_ULONGLONG==ts.type) {
+		if (TERMTYPE_LONGLONG==ts.type || TERMTYPE_ULONGLONG==ts.type) {
 			dbus_uint64_t uint64 = (dbus_uint64_t) ts.Value.luinteger;
 			dbus_message_iter_append_basic (iter, DBUS_TYPE_UINT64, &uint64);
 			DBGLOG(LOG_INFO, "egress_append_prim: uint64: %i", uint64);
@@ -546,7 +546,7 @@ egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
 	case DBUS_TYPE_STRING: {
 		if (TERMTYPE_STRING==ts.type) {
 			dbus_message_iter_append_basic (iter, DBUS_TYPE_STRING, &ts.Value.string);
-			DBGLOG(LOG_INFO, "egress_append_prim: string: %s", &ts.Value.string);
+			DBGLOG(LOG_INFO, "egress_append_prim: string: %s", ts.Value.string);
 		} else {
 			DBGLOG(LOG_ERR, "egress_append_prim: expecting 'STRING'");
 			exit(EDBUS_DECODE_ERROR);
@@ -557,7 +557,7 @@ egress_append_prim(TermHandler *th, DBusMessageIter *iter, int tt) {
 	case DBUS_TYPE_OBJECT_PATH: {
 		if (TERMTYPE_STRING==ts.type) {
 			dbus_message_iter_append_basic (iter, DBUS_TYPE_OBJECT_PATH, &ts.Value.string);
-			DBGLOG(LOG_INFO, "egress_append_prim: object path: %s", &ts.Value.string);
+			DBGLOG(LOG_INFO, "egress_append_prim: object path: %s", ts.Value.string);
 		} else {
 			DBGLOG(LOG_ERR, "egress_append_prim: expecting 'STRING'");
 			exit(EDBUS_DECODE_ERROR);
@@ -845,8 +845,7 @@ egress_decode_prim(TermHandler *th, DecodePrim *dp) {
 	}
 
 	r=th->iter(&ts);
-	if (r) return 1;
-	if (TERMTYPE_ATOM!=ts.type) {
+	if (r || (!r && (TERMTYPE_ATOM!=ts.type))) {
 		DBGLOG(LOG_ERR, "egress_decode_prim: expecting 'atom()'");
 		exit(EDBUS_DECODE_ERROR);
 	}
