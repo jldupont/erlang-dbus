@@ -2,13 +2,23 @@
 #
 
 ERLC=erlc -o ebin -I include
-SOURCES=src/test.erl
+SRCPATH=./src/
+SOURCES=erlang-dbus-client.erl erlang-dbus-client-tools.erl
+EDOC=escript docs
 
-all:
+all: code docs
+
+docs:
+	$(EDOC)
+
+
+code:
 	@for s in $(SOURCES) ; do \
-		$(ERLC) $$s ; \
+		$(ERLC) $(SRCPATH)$$s ; \
 		done
 
 clean:
 	@rm -f ebin/*.beam
 
+
+.PHONY: docs

@@ -7,23 +7,23 @@
 
 
 
-%% @doc Finds the specified file in a restricted
+%% @doc Finds the specified driver file in a restricted
 %%		set of paths
 %%
 %%		Starts by 
 %%
-find_file(Name) ->
+find_driver(Name) ->
 	Filename=code:which(?MODULE),
 	ModuleDirname=filename:dirname(Filename),
 	DriverPath1=filename:absname_join(ModuleDirname, "../driver"),
 	DriverPath2=filename:absname_join(ModuleDirname, "../../driver/Debug"),
 	DriverPath3=filename:absname_join(ModuleDirname, "../../driver/Release"),
-	find_file([DriverPath1, DriverPath2, DriverPath3], Name).
+	find_driver([DriverPath1, DriverPath2, DriverPath3], Name).
 
-find_file([], _Name) ->
+find_driver([], _Name) ->
 	{error, not_found};
 
-find_file([Path|Rest], Name) ->
+find_driver([Path|Rest], Name) ->
 	FilePath=Path++"/"++Name,
 	Result=file:read_file_info(FilePath),
 	case Result of
@@ -31,7 +31,7 @@ find_file([Path|Rest], Name) ->
 			{ok, FilePath};
 		
 		_ ->
-			find_file(Rest, Name)
+			find_driver(Rest, Name)
 	end.
 
 	
@@ -172,7 +172,7 @@ addvar(Var, Value, Count)     -> put(Var, Value+Count).
 %% ------------------------------------------------------------------- TESTS
 
 t1() ->
-	Result=find_file("erlang-dbus-driver_debug"),
+	Result=find_driver("erlang-dbus-driver_debug"),
 	io:format("~p", [Result]).
 
 
