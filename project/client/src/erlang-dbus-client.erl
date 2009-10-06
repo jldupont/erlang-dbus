@@ -2,7 +2,12 @@
 %% Created: 2009-10-06
 %% Description: Erlang Client Interface to DBus
 %%
-%% 
+%% @doc
+%% == Messages Generated ==
+%%
+%%  ```{edbus, driver.crashed}'''
+%%
+%%
 -module('erlang-dbus-client').
 
 %%
@@ -20,6 +25,10 @@
 		,init/1
 		,subscribe_signals/1
 		,register_name/1
+		,send_method/1
+		,send_signal/1
+		,send_return/1
+		,send_error/1
 		 ]).
 
 %%
@@ -58,7 +67,7 @@ register_name(Name) when is_list(Name) ->
 
 %% @doc Sends a "Method Call" message
 %%
-%% @spec send(method, Serial, Destination, Path, Interface, Member, Message) -> ok
+%% @spec send_method({Serial, Destination, Path, Interface, Member, Message}) -> ok
 %% where
 %%	Serial=integer()
 %%	Destination=string()
@@ -67,12 +76,12 @@ register_name(Name) when is_list(Name) ->
 %%	Member=string()
 %%	Message=term()
 %%
-send(method, Serial, Destination, Path, Interface, Member, Message) ->
-	ok;
+send_method({Serial, Destination, Path, Interface, Member, Message}) ->
+	ok.
 
 %% @doc Sends a "Signal" message
 %%
-%% @spec send(method, Serial, Destination, Path, Interface, Member, Message) -> ok
+%% @spec send_signal({Serial, Destination, Path, Interface, Member, Message}) -> ok
 %% where
 %%	Serial=integer()
 %%	Destination=string()
@@ -81,30 +90,30 @@ send(method, Serial, Destination, Path, Interface, Member, Message) ->
 %%	Member=string()
 %%	Message=term()
 %%
-send(signal, Serial, Destination, Path, Interface, Member, Message) ->
+send_signal({Serial, Destination, Path, Interface, Member, Message}) ->
 	ok.
 
 %% @doc Sends a "Method Return" message
 %%
-%% @spec send(method, Serial, Destination, Message) -> ok
+%% @spec send_return({Serial, Destination, Message}) -> ok
 %% where
 %%	Serial=integer()
 %%	Destination=string()
 %%	Message=term()
 %%
-send(return, Serial, Destination, Message) ->
+send_return({Serial, Destination, Message}) ->
 	ok.
 
 %% @doc Sends a "Error" message
 %%
-%% @spec send(method, Serial, Destination, Name, Message) -> ok
+%% @spec send_error({Serial, Destination, Name, Message}) -> ok
 %% where
 %%	Serial=integer()
 %%	Destination=string()
 %%	Name=string()
 %%	Message=term()
 %%
-send(error, Serial, Destination, Name, Message) ->
+send_error({Serial, Destination, Name, Message}) ->
 	ok.
 
 
