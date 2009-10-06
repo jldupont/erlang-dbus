@@ -214,7 +214,7 @@ __egress_thread_function(void *conn) {
 		}
 		DBGLOG(LOG_INFO, "egress thread: after send on DBus");
 
-		dbus_message_unref (dm);
+		//dbus_message_unref (dm);
 
 		//DBGLOG(LOG_INFO, "egress thread: loop end");
 

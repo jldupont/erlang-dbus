@@ -3,7 +3,7 @@
 %% Description: 
 -module('erlang-dbus-driver-test').
 
--define(TIMEOUT, 2000).
+-define(TIMEOUT, 500).
 -define(DRV, "/usr/bin/erlang-dbus-driver_debug").
 
 %%
