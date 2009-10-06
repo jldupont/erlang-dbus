@@ -54,7 +54,7 @@ handle_cast({api, Msg}, State) when State#state.drvport == undefined ->
 	dmsg(State, "> Starting Port"),
 	Drv=State#state.drvpath,
 	UName=State#state.uname,
-	Port = open_port({spawn, Drv++" type=\'signal\' type=\'method_return\' type=\'error\'"}, [{packet, 4}, binary, exit_status]),
+	Port = open_port({spawn, Drv}, [{packet, 4}, binary, exit_status]),
 	api(Port, UName, Msg),
     {noreply, State#state{drvport=Port}};
 
@@ -70,8 +70,12 @@ handle_cast({api, Msg}, State) when State#state.drvport =/= undefined ->
 api(Port, UName, init) ->
 	io:format("* Init ~n");
 
+api(Port, UName, {subscribe_signals, List}) ->
+	do_subscribe_signals(Port, UName, List);
+  
+
 api(Port, UName, {register, Name}) ->
-	io:format("* Register: UName: ~p  Name: ~p", [UName, Name]),
+	%io:format("* Register: UName: ~p  Name: ~p", [UName, Name]),
 	Uncoded=[m, 0, {UName}, {"org.freedesktop.DBus"}, 
 			 {"/org/freedesktop/DBus"}, 
 			 {"org.freedesktop.DBus"}, 
@@ -116,6 +120,16 @@ handle_info(Info, State) ->
     {noreply, State}.
 
 
+%% @private
+handle_call(_Request, _From, State) ->
+    Reply = ok,
+    {reply, Reply, State}.
+
+
+%%
+%% ============================================= Helpers
+%%
+
 
 hmsg(State, {unique_name, Name}) ->
 	dmsg(State, "** Name: ~p", [Name]),
@@ -128,13 +142,27 @@ hmsg(State, Msg) ->
 
 
 
+do_subscribe_signals(Port, UName, []) ->
+	finished;
+
+do_subscribe_signals(Port, UName, [Signal|Rest]) ->
+	Coded=prepDbusMethod(UName, "AddMatch", []),
+	erlang:port_command(Port, Coded),
+	do_subscribe_signals(Port, UName, Rest).	
 
 
 
-%% @private
-handle_call(_Request, _From, State) ->
-    Reply = ok,
-    {reply, Reply, State}.
+	
+prepDbusMethod(UName, Member, Params) ->
+	Uncoded=[m, 0, {UName}, {"org.freedesktop.DBus"}, 
+			 {"/org/freedesktop/DBus"}, 
+			 {"org.freedesktop.DBus"}, 
+			 {Member},
+			 Params], 
+	erlang:term_to_binary(Uncoded).
+	
+
+
 
 %% --------------------------------------------------------------------
 %% Function: terminate/2
