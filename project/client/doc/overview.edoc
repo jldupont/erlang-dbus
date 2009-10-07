@@ -1,10 +1,97 @@
-** overview.doc file for Erlang-DBus-Client library **
+** overview.edoc file for Erlang-DBus-Client library **
 
 @author: Jean-Lou Dupont
 @title Erlang DBus Client Library
 
 @doc 
 
-== Overview ==
+== Introduction ==
 
 This project consists of an Erlang Client Interface Library for accessing DBus.
+Two components are made available:
+
+ - a Port Driver (interface to libdbus)
+ 
+ - an Erlang Client library
+ 
+The dependencies are listed below:
+
+ - Erlang >= R13
+ 
+ - EPAPI ("Erlang Port API" available at [http://epapi.googlecode.com/])
+ 
+  
+== Overview ==
+
+=== Dbus basics ===
+
+At its core, DBus mimics the functionality of a bus to some extent: once connected to the bus, 
+a Client is uniquely identified (analoguous to a timeslot on a physical bus) and can send 
+messages freely. Message reception on the other hand differs from a physical bus: only messages
+"filtered in" are received.
+
+=== Library basics ===
+
+The interface is composed of two independent processing paths in separate threads.
+
+The "ingress" thread processes messages received on DBus and forwards those to
+the Erlang Client via a "Port Driver" (erlang_dbus_driver).
+
+The "egress" thread processes messages originated from the Erlang Client side
+onto the DBus.
+
+=== Marshalling Protocol ===
+
+==== Type conversion ====
+
+<ul>
+ <li>dbus byte    --> erlang {byte, int()}</li>
+ <li>dbus boolean --> erlang {bool, true | false}</li>
+ <li>dbus INT16   --> erlang {i16, int()}</li>
+ <li>dbus UINT16  --> erlang {ui16, int()}</li>
+ <li>dbus INT32   --> erlang {i32, int()}</li>
+ <li>dbus UINT32  --> erlang {ui32, int()}</li>
+ <li>dbus INT64   --> erlang {i64, int()}</li>
+ <li>dbus UINT64  --> erlang {ui64, int()}</li>
+ <li>dbus DOUBLE  --> erlang {f, float()}</li>
+ <li>dbus STRING  --> erlang {str, list(int())}</li>
+ <li>dbus OBJECT_PATH --> erlang {op, list(int())}</li>
+ <li>dbus ARRAY   --> erlang {a, [term()]}</li>
+ <li>dbus VARIANT --> erlang {v, term()}</li>
+ <li>dbus STRUCT  --> erlang {st, [term()]}</li>
+ <li>dbus DICT    --> erlang {d, term(), term()}</li>
+ <li>dbus SIGNATURE --> erlang {sig, list(int())}</li>
+</ul>
+
+==== Ingress & Egress message format ====
+
+The following message format applies between the Erlang Client library and the Port Driver:
+
+Method_Call:
+	```
+	[m, Serial, {Sender}, {Destination}, {Path}, {Interface}, {Member}, Message] 
+	'''
+	
+Signal:
+	```
+	[s, Serial, {Sender}, {Destination}, {Path}, {Interface}, {Member}, Message]
+	'''
+
+Method_Return:
+	```
+	[r, Serial, {Sender}, {Destination}, Message]
+	'''
+
+Error:
+	```
+	[e, Serial, {Sender}, {Destination}, {Name}, Message]
+	'''
+
+Where:
+
+	<ul>
+		<li>Serial=int()</li>
+		<li>Sender=Destination=Path=Interface=Member=Name=string()</li>
+		<li>Message=term()</li>
+	</ul>
+
