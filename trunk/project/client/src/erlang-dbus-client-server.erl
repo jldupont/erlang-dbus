@@ -62,47 +62,48 @@ handle_cast({From, api, Msg}, State) when State#state.drvport == undefined ->
 
 	UName=State#state.uname,
 	Port = open_port({spawn, Drv}, [{packet, 4}, binary, exit_status]),
-	api(From, Port, UName, Msg),
+	api(State, From, Port, UName, Msg),
     {noreply, State#state{drvport=Port}};
 
 %% @doc Dispath API request
 %%
 %% @private
 handle_cast({From, api, Msg}, State) when State#state.drvport =/= undefined ->
+	%dmsg("handle_cast: Msg: ~p~n", [Msg]),
 	Port=State#state.drvport,
 	UName=State#state.uname,
-	api(From, Port, UName, Msg),
+	api(State, From, Port, UName, Msg),
     {noreply, State}.
 
 
 
 %% @private
-api(_From, _Port, _UName, init) ->
+api(_State, _From, _Port, _UName, init) ->
 	io:format("* Init ~n");
 
-api(From, _Port, undefined, _Msg) ->
-	safe_reply(From, {edbus, {error, 'interface.not.ready'}});
+api(State, From, _Port, undefined, _Msg) ->
+	safe_reply(State, From, {edbus, {error, 'interface.not.ready'}});
 
-api(From, Port, UName, {subscribe_signals, List}) ->
-	do_subscribe_signals(From, Port, UName, List);
+api(State, From, Port, UName, {subscribe_signals, List}) ->
+	do_subscribe_signals(State, From, Port, UName, List);
   
-api(From, Port, UName, {register, Name}) ->
-	do_register_name(From, Port, UName, Name);
+api(State, From, Port, UName, {register, Name}) ->
+	do_register_name(State, From, Port, UName, Name);
 
-api(From, Port, UName, {method, Serial, Destination, Path, Interface, Member, Message}) ->
-	do_send(From, m, Port, UName, Serial, Destination, Path, Interface, Member, Message);
+api(State, From, Port, UName, {method, Serial, Destination, Path, Interface, Member, Message}) ->
+	do_send(State, From, m, Port, UName, Serial, Destination, Path, Interface, Member, Message);
 
-api(From, Port, UName, {signal, Serial, Destination, Path, Interface, Member, Message}) ->
-	do_send(From, s, Port, UName, Serial, Destination, Path, Interface, Member, Message);
+api(State, From, Port, UName, {signal, Serial, Destination, Path, Interface, Member, Message}) ->
+	do_send(State, From, s, Port, UName, Serial, Destination, Path, Interface, Member, Message);
 
-api(From, Port, UName, {return, Serial, Destination, Message}) ->
-	do_send(From, r, Port, UName, Serial, Destination, Message);
+api(State, From, Port, UName, {return, Serial, Destination, Message}) ->
+	do_send(State, From, r, Port, UName, Serial, Destination, Message);
 
-api(From, Port, UName, {error, Serial, Destination, Name, Message}) ->
-	do_send(From, e, Port, UName, Serial, Destination, Name, Message);
+api(State, From, Port, UName, {error, Serial, Destination, Name, Message}) ->
+	do_send(State, From, e, Port, UName, Serial, Destination, Name, Message);
 
 %%% CATCH-ALL %%%
-api(_From, _Port, _UName, Msg) ->
+api(_State, _From, _Port, _UName, Msg) ->
 	dmsg("api: unsupported msg: ~p", [Msg]),
 	ok.
 
@@ -156,59 +157,63 @@ handle_call(_Request, _From, State) ->
 %% @private
 hmsg(State, {unique_name, Name}) ->
 	ClientPid=State#state.'client.pid',
-	safe_reply(ClientPid, {edbus, {ready, Name}}),
+	safe_reply(State, ClientPid, {edbus, {ready, Name}}),
 	dmsg(State, "** Name: ~p", [Name]),
 	State#state{uname=Name};
 
-
+%% @doc Receive any other DBus message
+%% 
+%% @private
 hmsg(State, Msg) ->
 	dmsg(State, "Msg: ~p", [Msg]),
+	ClientPid=State#state.'client.pid',
+	safe_reply(State, ClientPid, {edbus, Msg}),
 	State.
 
 
 %% @doc Ask DBus to register a Name
 %%
 %% @private
-do_register_name(From, Port, UName, Name) ->
+do_register_name(State, From, Port, UName, Name) ->
 	RawMsg=prep_dbus_method(UName, "RequestName", 
 					[{str, Name}, 
 			 		{ui32, ?DBUS_NAME_FLAG_DO_NOT_QUEUE}]),
-	port_send(From, Port, RawMsg).
+	port_send(State, From, Port, RawMsg).
 
 %% @doc Subscribe the Client to specific Signals
 %%		based on the 'interface' level filter.
 %%
 %% @private
-do_subscribe_signals(_From, _Port, _UName, []) ->
+do_subscribe_signals(_State, _From, _Port, _UName, []) ->
 	finished;
 
-do_subscribe_signals(From, Port, UName, [Signal|Rest]) ->
-	RawMsg=prep_dbus_method(UName, "AddMatch", [{str, "type=\'signal\' interface=\'"++Signal++"\'"}]),
-	port_send(From, Port, RawMsg),
-	do_subscribe_signals(From, Port, UName, Rest).	
+do_subscribe_signals(State, From, Port, UName, [Signal|Rest]) ->
+	RawMsg=prep_dbus_method(UName, "AddMatch", [{str, "type=\'signal\', interface=\'"++Signal++"\'"}]),
+	port_send(State, From, Port, RawMsg),
+	do_subscribe_signals(State, From, Port, UName, Rest).	
 
 %% @doc Sends a Method_call / Signal message on DBus
 %%
 %% @private
-do_send(From, Type, Port, UName, Serial, Destination, Path, Interface, Member, Message) ->
+do_send(State, From, Type, Port, UName, Serial, Destination, Path, Interface, Member, Message) ->
 	RawMsg=[Type, Serial, {UName}, {Destination}, 
 		 {Path}, {Interface}, {Member},
 		 Message],
-	port_send(From, Port, RawMsg).
+	port_send(State, From, Port, RawMsg).
 
 %% @doc Sends a "Method_Return" message on DBus
 %%
 %% @private
-do_send(From, r, Port, UName, Serial, Destination, Message) ->
+do_send(State, From, r, Port, UName, Serial, Destination, Message) ->
 	RawMsg=[r, Serial, {UName}, {Destination}, Message],
-	port_send(From, Port, RawMsg).
+	port_send(State, From, Port, RawMsg).
 	
 %% @doc Sends an "Error" message on DBus
 %%
 %% @private
-do_send(From, e, Port, UName, Serial, Destination, Name, Message) ->
+do_send(State, From, e, Port, UName, Serial, Destination, Name, Message) ->
 	RawMsg=[e, Serial, {UName}, {Destination}, {Name}, Message],
-	port_send(From, Port, RawMsg).
+	port_send(State, From, Port, RawMsg).
 
 %% @doc Prepares a "Method_call" message
 %%
@@ -224,13 +229,14 @@ prep_dbus_method(UName, Member, Params) ->
 %%		via the Port Driver.
 %%
 %% @private
-port_send(From, Port, RawMsg) ->
+port_send(State, From, Port, RawMsg) ->
 	try
+		%dmsg(State, "port_send: rawmsg: ~p~n", [RawMsg]),
 		Coded=erlang:term_to_binary(RawMsg),
 		erlang:port_command(Port, Coded)
 	catch
 		_:_ ->
-			safe_reply(From, {edbus, {error, send.to.driver}})
+			safe_reply(State, From, {edbus, {error, send.to.driver}})
 	end.
 
 %% @doc Provide message feedback back to the Client
@@ -239,7 +245,7 @@ port_send(From, Port, RawMsg) ->
 %%		probably get garbage collected anyways.
 %%
 %% @private
-safe_reply(To, Msg) ->
+safe_reply(_State, To, Msg) ->
 	try
 		To ! Msg
 	catch

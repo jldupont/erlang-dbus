@@ -89,7 +89,7 @@ handle_call(_Request, _From, State) ->
 handle_cast(start, State) ->
 	Type=State#state.type,
 	io:format("Init for Type: ~p~n", [Type]),
-	?EDBUS:init(debug),
+	?EDBUS:init(),
     {noreply, State};
 
 
@@ -118,11 +118,12 @@ handle_info({edbus, {ready, UName}}, State) ->
 
 handle_info(do_ping, State) ->
 	Counter=State#state.counter,
-	?EDBUS:send_signal([0, "com.jldupont.edbus.pong", "com/jldupont/edbus", "com.jldupont.edbus", "ping", {ui32, Counter}]),
+	io:format("Sending Ping, counter(~p) ", [Counter]),
+	?EDBUS:send_signal({0, "com.jldupont.edbus.pong", "/com/jldupont/edbus", "com.jldupont.edbus", "ping", {ui32, Counter}}),
     {noreply, State#state{counter=Counter+1}};
 
 
-handle_info([s, _Serial, {_Sender}, {_Dest}, {_Path}, {"com.jldupont.edbus"}, {"ping"}, Message], State) ->
+handle_info({edbus, [s, _Serial, {_Sender}, {_Dest}, {_Path}, {"com.jldupont.edbus"}, {"ping"}, Message]}, State) ->
 	io:format("Ping received: ~p~n", [Message]),
     {noreply, State};
 
