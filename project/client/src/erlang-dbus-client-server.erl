@@ -51,6 +51,9 @@ handle_cast(stop, State) ->
     {stop, normal, State};
 
 %% @doc Start the Driver before dispatching the API request
+%%		Restarting the driver is, most probably, as a result
+%%		of the driver crashing due to spurious disconnect events
+%%		from DBus (exit_code==2)... or a bug in the driver ;-)
 %%
 %% @private
 handle_cast({From, api, Msg}, State) when State#state.drvport == undefined ->
@@ -141,7 +144,7 @@ handle_call(_Request, _From, State) ->
 
 
 %%
-%% ============================================= Helpers
+%% ===================================================================== Helpers
 %%
 
 
@@ -163,14 +166,18 @@ hmsg(State, Msg) ->
 	State.
 
 
+%% @doc Ask DBus to register a Name
+%%
+%% @private
 do_register_name(From, Port, UName, Name) ->
 	RawMsg=prep_dbus_method(UName, "RequestName", 
 					[{str, Name}, 
 			 		{ui32, ?DBUS_NAME_FLAG_DO_NOT_QUEUE}]),
 	port_send(From, Port, RawMsg).
 
-
-
+%% @doc Subscribe the Client to specific Signals
+%%		based on the 'interface' level filter.
+%%
 %% @private
 do_subscribe_signals(_From, _Port, _UName, []) ->
 	finished;
@@ -180,7 +187,8 @@ do_subscribe_signals(From, Port, UName, [Signal|Rest]) ->
 	port_send(From, Port, RawMsg),
 	do_subscribe_signals(From, Port, UName, Rest).	
 
-
+%% @doc Sends a Method_call / Signal message on DBus
+%%
 %% @private
 do_send(From, Type, Port, UName, Serial, Destination, Path, Interface, Member, Message) ->
 	RawMsg=[Type, Serial, {UName}, {Destination}, 
@@ -188,16 +196,22 @@ do_send(From, Type, Port, UName, Serial, Destination, Path, Interface, Member, M
 		 Message],
 	port_send(From, Port, RawMsg).
 
+%% @doc Sends a "Method_Return" message on DBus
+%%
 %% @private
 do_send(From, r, Port, UName, Serial, Destination, Message) ->
 	RawMsg=[r, Serial, {UName}, {Destination}, Message],
 	port_send(From, Port, RawMsg).
 	
+%% @doc Sends an "Error" message on DBus
+%%
 %% @private
 do_send(From, e, Port, UName, Serial, Destination, Name, Message) ->
 	RawMsg=[e, Serial, {UName}, {Destination}, {Name}, Message],
 	port_send(From, Port, RawMsg).
 
+%% @doc Prepares a "Method_call" message
+%%
 %% @private	
 prep_dbus_method(UName, Member, Params) ->
 	[m, 0, {UName}, {"org.freedesktop.DBus"}, 
@@ -205,7 +219,10 @@ prep_dbus_method(UName, Member, Params) ->
 			 {"org.freedesktop.DBus"}, 
 			 {Member}]++Params.
 
-	
+%% @doc Performs the actual transmission
+%%		of the message destined to DBus
+%%		via the Port Driver.
+%%
 %% @private
 port_send(From, Port, RawMsg) ->
 	try
@@ -216,7 +233,11 @@ port_send(From, Port, RawMsg) ->
 			safe_reply(From, {edbus, {error, send.to.driver}})
 	end.
 
-
+%% @doc Provide message feedback back to the Client
+%%		Can't do much if the Client can't be reached...
+%%		If this situation persists, this server will most
+%%		probably get garbage collected anyways.
+%%
 %% @private
 safe_reply(To, Msg) ->
 	try
@@ -244,9 +265,12 @@ code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
 
 %% --------------------------------------------------------------------
-%%% Internal functions
+%% ------------------------------------------------- Internal functions
 %% --------------------------------------------------------------------
 
+
+%% @doc Prints a message when in 'Debug' mode
+%%
 %%@private
 dmsg(State, Msg) when State#state.debug==true ->
 	io:format(Msg++"~n");
