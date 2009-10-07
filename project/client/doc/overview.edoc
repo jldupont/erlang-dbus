@@ -45,16 +45,16 @@ onto the DBus.
 The Client library consists of a process which spawns the Port Driver
 and mediates between the User of the Client Library and DBus.
 
-Once initialized through the ```init()''' method:
+Once initialized through the `init()' method:
 
- - the User process will received ```{edbus, {ready, UName}}''' message 
+ - the User process will received `{edbus, {ready, UName}}' message 
    indicating that the library is ready for access. The "Unique Name"
    DBus has assigned to the Client connection is also provided.
    
  - the User can from that moment start using the Client library e.g.
-   the User can register a name through the ```register_name()''' method.
+   the User can register a name through the `register_name()' method.
    
- - the User should configure any signal filters through the ```subscribe_signals()''' method
+ - the User should configure any signal filters through the `subscribe_signals()' method
  
  - the User will receive all messages destined to it (i.e. UName / Name) regardless of type  
 
@@ -82,7 +82,7 @@ Once initialized through the ```init()''' method:
  <li>dbus SIGNATURE --> erlang {sig, list(int())}</li>
 </ul>
 
-==== Ingress & Egress message format ====
+==== Ingress and Egress message format ====
 
 The following message format applies between the Erlang Client library and the Port Driver:
 
@@ -113,4 +113,9 @@ Where:
 		<li>Sender=Destination=Path=Interface=Member=Name=string()</li>
 		<li>Message=term()</li>
 	</ul>
+
+== Sample Usage ==
+
+For example of usage, please refer to the "Ping" and "Pong" test programs.
+
 

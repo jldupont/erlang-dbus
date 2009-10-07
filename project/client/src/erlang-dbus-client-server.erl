@@ -183,7 +183,7 @@ do_subscribe_signals(_From, _Port, _UName, []) ->
 	finished;
 
 do_subscribe_signals(From, Port, UName, [Signal|Rest]) ->
-	RawMsg=prep_dbus_method(UName, "AddMatch", ["type=\'signal\' interface=\'"++Signal++"\'"]),
+	RawMsg=prep_dbus_method(UName, "AddMatch", [{str, "type=\'signal\' interface=\'"++Signal++"\'"}]),
 	port_send(From, Port, RawMsg),
 	do_subscribe_signals(From, Port, UName, Rest).	
 
