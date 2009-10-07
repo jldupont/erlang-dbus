@@ -179,7 +179,7 @@ safe_send_to_server(Message) ->
 	try
 		gen_server:cast(?SERVER, {self(), api, Message})
 	catch
-		_:_ -> error
+		_:_ -> {error, server.unreachable}
 	end.
 	
 %% @private

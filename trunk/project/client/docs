@@ -31,10 +31,8 @@ sources(Liste) ->
 
 is_source(File) ->
 	case string:str(File, ".erl") of
-		0 ->
-			false;
-		_ ->
-			true
+		0 -> false;
+		_ -> true
 	end.
 	
 is_not_test(File) ->
