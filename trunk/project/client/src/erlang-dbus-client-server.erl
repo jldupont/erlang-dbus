@@ -50,20 +50,24 @@ handle_cast(stop, State) ->
 	dmsg(State, "! Stopping"),
     {stop, normal, State};
 
-
+%% @doc Start the Driver before dispatching the API request
+%%
+%% @private
 handle_cast({From, api, Msg}, State) when State#state.drvport == undefined ->
 	dmsg(State, "> Starting Port"),
 	Drv=State#state.drvpath,
+
 	UName=State#state.uname,
 	Port = open_port({spawn, Drv}, [{packet, 4}, binary, exit_status]),
 	api(From, Port, UName, Msg),
     {noreply, State#state{drvport=Port}};
 
-
+%% @doc Dispath API request
+%%
+%% @private
 handle_cast({From, api, Msg}, State) when State#state.drvport =/= undefined ->
 	Port=State#state.drvport,
 	UName=State#state.uname,
-	dmsg(State, "> Msg: ~p ... Port: ~p~n", [Msg, Port]),
 	api(From, Port, UName, Msg),
     {noreply, State}.
 
@@ -72,6 +76,9 @@ handle_cast({From, api, Msg}, State) when State#state.drvport =/= undefined ->
 %% @private
 api(_From, _Port, _UName, init) ->
 	io:format("* Init ~n");
+
+api(From, _Port, undefined, _Msg) ->
+	safe_reply(From, {edbus, {error, 'interface.not.ready'}});
 
 api(From, Port, UName, {subscribe_signals, List}) ->
 	do_subscribe_signals(From, Port, UName, List);
@@ -110,6 +117,7 @@ handle_info({_Port, {data, Data}}, State) ->
 	NewState=hmsg(State, Msg),
     {noreply, NewState};
 
+
 %% @doc Port driver crashed 
 %%
 %% @private
@@ -117,11 +125,12 @@ handle_info({_Port, {exit_status, Reason}}, State) ->
 	dmsg(State, "Driver crashed, Reason: ~p", [Reason]),
     {noreply, State#state{drvport=undefined}};
 
+
 %% @doc Catch-all
 %%
 %% @private
 handle_info(Info, State) ->
-	dmsg(State, "Info: ~p", [Info]),
+	dmsg(State, "Unsupported Info: ~p", [Info]),
     {noreply, State}.
 
 

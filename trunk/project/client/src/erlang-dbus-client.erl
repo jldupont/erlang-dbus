@@ -15,6 +15,9 @@
 %%
 %%	```{edbus, {ready, UName}}''' 
 %%
+%%  The Client attempted to use the interface prematurely:
+%%
+%%	```{edbus, {error, 'interface.not.ready'}}'''
 %%
 %%
 -module('erlang-dbus-client').
@@ -197,7 +200,7 @@ real_init(Drv, Debug) ->
 	case Result of
 		{ok, Filename} ->
 			gen_server:start_link({local, ?SERVER}, ?SERVER_MOD, [{client, self()}, {drv, Filename}, {debug, Debug}], []),
-			gen_server:cast(?SERVER, {api, init});
+			gen_server:cast(?SERVER, {self(), api, init});
 		_ ->
 			{error, driver_not_found}
 	end.
