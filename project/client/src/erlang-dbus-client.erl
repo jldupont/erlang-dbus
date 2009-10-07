@@ -5,9 +5,16 @@
 %% @doc
 %% == Messages Generated ==
 %%
+%% The following messages are generated back to the Client.
+%%
+%%	An error occured:
+%%
 %%	```{edbus, {error, Reason}}'''
 %%
-%%  ```{edbus, driver.crashed}'''
+%%	The Client interface is ready to be used:
+%%
+%%	```{edbus, {ready, UName}}''' 
+%%
 %%
 %%
 -module('erlang-dbus-client').
@@ -189,7 +196,7 @@ real_init(Drv, Debug) ->
 	Result=?TOOLS:find_driver(Drv),
 	case Result of
 		{ok, Filename} ->
-			gen_server:start_link({local, ?SERVER}, ?SERVER_MOD, [{drv, Filename}, {debug, Debug}], []),
+			gen_server:start_link({local, ?SERVER}, ?SERVER_MOD, [{client, self()}, {drv, Filename}, {debug, Debug}], []),
 			gen_server:cast(?SERVER, {api, init});
 		_ ->
 			{error, driver_not_found}

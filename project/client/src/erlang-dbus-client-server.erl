@@ -16,6 +16,7 @@
 				,drvport
 			    ,debug
 			   ,uname
+			   ,'client.pid'
 			   }).
 
 %% NOTE: MUST BE IN-SYNC with 'dbus-shared.h'
@@ -30,9 +31,9 @@
 %%          ignore               |
 %%          {stop, Reason}
 %% --------------------------------------------------------------------
-init([{drv, Drv}, {debug, Debug}]) ->
+init([{client, ClientPid}, {drv, Drv}, {debug, Debug}]) ->
 	io:format("server: drv: ~p", [Drv]),
-    {ok, #state{drvpath=Drv, debug=Debug}}.
+    {ok, #state{drvpath=Drv, debug=Debug, 'client.pid'=ClientPid}}.
 
 
 
@@ -135,8 +136,15 @@ handle_call(_Request, _From, State) ->
 %%
 
 
+%% @doc Receives the 'unique-name' assigned by DBus
+%%		to our connection. Communicate this information
+%%		back to the Client signaling that the interface
+%%		can safely be used.
+%% 
 %% @private
 hmsg(State, {unique_name, Name}) ->
+	ClientPid=State#state.'client.pid',
+	safe_reply(ClientPid, {edbus, {ready, Name}}),
 	dmsg(State, "** Name: ~p", [Name]),
 	State#state{uname=Name};
 
