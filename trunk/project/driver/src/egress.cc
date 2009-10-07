@@ -214,7 +214,10 @@ __egress_thread_function(void *conn) {
 		}
 		DBGLOG(LOG_INFO, "egress thread: after send on DBus");
 
-		//dbus_message_unref (dm);
+		//It seems we cannot "unref" the message here...
+		// DBus takes ownership of the message from the moment
+		// it is sent through dbus_connection_send.
+		//dbus_message_unref (dm); // DON'T UN-COMMENT THIS
 
 		//DBGLOG(LOG_INFO, "egress thread: loop end");
 

@@ -669,6 +669,44 @@ ingress_filter_func (DBusConnection *connection,
 }
 
 
+char *
+ingress_copy_string(const char *istr) {
+
+	if (NULL==istr) return NULL;
+
+	size_t len=strlen(istr);
+
+	char *copy=(char *)malloc( len+1 );
+
+	return strcpy( copy, (char *)istr );
+}//
+
+void
+ingress_clean_edbus_message(EDBusMessage *edmsg) {
+
+	//be forgetful ;-)
+	if (NULL==edmsg) return;
+
+	if (NULL != edmsg->sender) { free((void *)edmsg->sender); edmsg->sender=NULL; }
+	if (NULL != edmsg->dest)   { free((void *)edmsg->dest);   edmsg->dest=NULL; }
+	if (NULL != edmsg->Type.Error.name) { free((void *)edmsg->Type.Error.name); edmsg->Type.Error.name=NULL; }
+	if (NULL != edmsg->Type.Method_Signal.path) { free((void *)edmsg->Type.Method_Signal.path); edmsg->Type.Method_Signal.path=NULL; }
+	if (NULL != edmsg->Type.Method_Signal.interface) { free((void *)edmsg->Type.Method_Signal.interface); edmsg->Type.Method_Signal.interface=NULL; }
+	if (NULL != edmsg->Type.Method_Signal.member) { free((void *)edmsg->Type.Method_Signal.member); edmsg->Type.Method_Signal.member=NULL; }
+}//
+
+void
+ingress_init_edbus_message(EDBusMessage *edmsg) {
+
+	edmsg->sender=NULL;
+	edmsg->dest=NULL;
+	edmsg->Type.Error.name=NULL;
+	edmsg->Type.Method_Signal.interface=NULL;
+	edmsg->Type.Method_Signal.path=NULL;
+	edmsg->Type.Method_Signal.member=NULL;
+
+}//
+
 /**
  *  Handle 'ingress' message coming on DBus
  *
@@ -682,10 +720,18 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 	EDBusMessage   *edmsg=(EDBusMessage *)malloc(sizeof(EDBusMessage));
 	DBusMessageIter *iter=(DBusMessageIter *)malloc(sizeof(DBusMessageIter));
 
+	ingress_init_edbus_message(edmsg);
+
+	const char *tmp;
+
 	// Start the receive cycle
 	edmsg->type =   dbus_message_get_type (message);
-	edmsg->sender = dbus_message_get_sender (message);
-	edmsg->dest =   dbus_message_get_destination (message);
+
+	tmp = dbus_message_get_sender (message);
+	edmsg->sender = ingress_copy_string( tmp );
+
+	tmp = dbus_message_get_destination (message);
+	edmsg->dest = ingress_copy_string( tmp );
 
 	//DBGLOG(LOG_INFO, "ingress_handle_message, message type: %i", edmsg->type);
 
@@ -693,9 +739,14 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 	  case DBUS_MESSAGE_TYPE_METHOD_CALL:
 	  case DBUS_MESSAGE_TYPE_SIGNAL:
 		  edmsg->serial = dbus_message_get_serial (message);
-		  edmsg->Type.Method_Signal.path = dbus_message_get_path (message);
-		  edmsg->Type.Method_Signal.interface = dbus_message_get_interface (message);
-		  edmsg->Type.Method_Signal.member = dbus_message_get_member (message);
+		  tmp=dbus_message_get_path (message);
+		  edmsg->Type.Method_Signal.path = ingress_copy_string(tmp);
+
+		  tmp=dbus_message_get_interface (message);
+		  edmsg->Type.Method_Signal.interface = ingress_copy_string(tmp);
+
+		  tmp=dbus_message_get_member (message);
+		  edmsg->Type.Method_Signal.member = ingress_copy_string(tmp);
 		  break;
 
 	case DBUS_MESSAGE_TYPE_METHOD_RETURN:
@@ -704,7 +755,9 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 
 	case DBUS_MESSAGE_TYPE_ERROR:
 		edmsg->serial = dbus_message_get_reply_serial (message);
-		edmsg->Type.Error.name = dbus_message_get_error_name (message);
+
+		tmp=dbus_message_get_error_name (message);
+		edmsg->Type.Error.name = ingress_copy_string(tmp);
 		break;
 
 	default:
@@ -744,6 +797,7 @@ ingress_handle_message(DBusMessage *message, void *user_data) {
 	//to be re-entrant... I don't really need to bother with this,
 	//at least not now.
 	delete oth;
+	ingress_clean_edbus_message( edmsg );
 	free( edmsg );
 	free( iter );
 
