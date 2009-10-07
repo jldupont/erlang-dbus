@@ -30,7 +30,7 @@ a Client is uniquely identified (analoguous to a timeslot on a physical bus) and
 messages freely. Message reception on the other hand differs from a physical bus: only messages
 "filtered in" are received.
 
-=== Library basics ===
+=== Driver basics ===
 
 The interface is composed of two independent processing paths in separate threads.
 
@@ -39,6 +39,25 @@ the Erlang Client via a "Port Driver" (erlang_dbus_driver).
 
 The "egress" thread processes messages originated from the Erlang Client side
 onto the DBus.
+
+=== Library basics ===
+
+The Client library consists of a process which spawns the Port Driver
+and mediates between the User of the Client Library and DBus.
+
+Once initialized through the ```init()''' method:
+
+ - the User process will received ```{edbus, {ready, UName}}''' message 
+   indicating that the library is ready for access. The "Unique Name"
+   DBus has assigned to the Client connection is also provided.
+   
+ - the User can from that moment start using the Client library e.g.
+   the User can register a name through the ```register_name()''' method.
+   
+ - the User should configure any signal filters through the ```subscribe_signals()''' method
+ 
+ - the User will receive all messages destined to it (i.e. UName / Name) regardless of type  
+
 
 === Marshalling Protocol ===
 
