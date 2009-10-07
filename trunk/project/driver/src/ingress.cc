@@ -47,7 +47,7 @@ int ingress_do_iter(TermHandler *th, DBusMessageIter *iter);
 int ingress_init_message(TermHandler *th, EDBusMessage *edmsg);
 char *ingress_translate_type(int);
 int ingress_send_unique_name(const char *uniq_name);
-
+int ingress_encode_simple_string(TermHandler *th, char *string);
 
 
 // -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
@@ -103,6 +103,25 @@ ingress_encode_string(TermHandler *th, char *string) {
 
 	ts.type=TERMTYPE_ATOM;
 	ts.Value.string=(void *) "str";
+	th->append(&ts);
+
+	ts.type=TERMTYPE_STRING;
+	ts.Value.string=(void *) ((NULL==string) ? "":string);
+	return th->append(&ts);
+}
+
+/**
+ * Encodes a STRING as {String}
+ */
+int
+ingress_encode_simple_string(TermHandler *th, char *string) {
+
+	//DBGLOG(LOG_INFO, "ingress_encode_string: %s", string);
+
+	TermStruct ts;
+
+	ts.type=TERMTYPE_START_TUPLE;
+	ts.size=1;
 	th->append(&ts);
 
 	ts.type=TERMTYPE_STRING;
@@ -197,32 +216,33 @@ ingress_init_message(TermHandler *th, EDBusMessage *edmsg) {
 	ts.Value.uinteger=(unsigned long) edmsg->serial;
 	th->append(&ts);
 
-	// [Type, Serial, {str,Sender}
+	// [Type, Serial, {Sender}
 	ingress_encode_start_list(th);
-	ingress_encode_string(th, (char *) edmsg->sender);
+	ingress_encode_simple_string(th, (char *) edmsg->sender);
 
-	// [Type, Serial, {str,Sender}, {str,Destination}
+	// [Type, Serial, {Sender}, {Destination}
 	ingress_encode_start_list(th);
-	ingress_encode_string(th, (char *) edmsg->dest);
+	ingress_encode_simple_string(th, (char *) edmsg->dest);
 
 	switch(edmsg->type) {
 	case DBUS_MESSAGE_TYPE_METHOD_CALL:   //1
 	case DBUS_MESSAGE_TYPE_SIGNAL:        //4
-		// [Type, Serial, {str, Sender}, {str,Destination}, {str,Path}, {str,Interface}, {str,Member}
+		// [Type, Serial, {Sender}, {Destination}, {Path}, {Interface}, {Member}
 		ingress_encode_start_list(th);
-		ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.path);
+		ingress_encode_simple_string(th, (char *) edmsg->Type.Method_Signal.path);
 		ingress_encode_start_list(th);
-		ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.interface);
+		ingress_encode_simple_string(th, (char *) edmsg->Type.Method_Signal.interface);
 		ingress_encode_start_list(th);
-		ingress_encode_string(th, (char *) edmsg->Type.Method_Signal.member);
+		ingress_encode_simple_string(th, (char *) edmsg->Type.Method_Signal.member);
 		break;
 
 	case DBUS_MESSAGE_TYPE_METHOD_RETURN: //2
 		break;
 
 	case DBUS_MESSAGE_TYPE_ERROR:         //3
+		// ... {Name}...
 		ingress_encode_start_list(th);
-		ingress_encode_string(th, (char *) edmsg->Type.Error.name);
+		ingress_encode_simple_string(th, (char *) edmsg->Type.Error.name);
 		break;
 
 	}

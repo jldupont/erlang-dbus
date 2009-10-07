@@ -23,31 +23,22 @@
  *
  *    DBus                Erlang
  *    ====                ======
- *    BYTE                {byte, int()}
- *    BOOLEAN             {bool, true|false}
- *    INT16               {int16,  int()}
- *    UINT16              {uint16, int()}
- *    INT32               {int32,  int()}
- *    UINT32              {uint32, int()}
- *    INT64               {int64,  int()}
- *    UINT64              {uint64, int()}
- *    DOUBLE              {double, float()}
- *    STRING              {string, list(int())}
- *    OBJECT_PATH         {object_path, list(int())}   Same as STRING
+ *    BYTE                {by,   int()}
+ *    BOOLEAN             {bo,   true|false}
+ *    INT16               {i16,  int()}
+ *    UINT16              {ui16, int()}
+ *    INT32               {i32,  int()}
+ *    UINT32              {ui32, int()}
+ *    INT64               {i64,  int()}
+ *    UINT64              {ui64, int()}
+ *    DOUBLE              {f,    float()}
+ *    STRING              {str,  [int()]}
+ *    OBJECT_PATH         {op,   [int()]}   Same as STRING
  *
- *    ARRAY               list()                       Only elements of the same type
- *    VARIANT
- *    STRUCT              list()                       Does not appear to be in use
- *    DICT                [{Key, Value}]
- *
- *   \subsection Term to Erlang Client
- *
- *   {dbus, Type, Serial, Sender, Destination, Path, Interface, Member, Message}
- *
- *	 Type=atom()
- *	 Serial=int()
- *   Sender=Destination=Path=Interface=Member=string()
- *   Message=term()
+ *    ARRAY               {a, [term()]}
+ *    VARIANT             {v, term()}
+ *    STRUCT              {st, [term()]}
+ *    DICT                {d, term(), term()}
  *
  *
  */
