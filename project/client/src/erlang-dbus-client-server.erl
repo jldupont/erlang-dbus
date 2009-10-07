@@ -84,6 +84,11 @@ api(From, Port, UName, {method, Serial, Destination, Path, Interface, Member, Me
 api(From, Port, UName, {signal, Serial, Destination, Path, Interface, Member, Message}) ->
 	do_send(From, s, Port, UName, Serial, Destination, Path, Interface, Member, Message);
 
+api(From, Port, UName, {return, Serial, Destination, Message}) ->
+	do_send(From, r, Port, UName, Serial, Destination, Message);
+
+api(From, Port, UName, {error, Serial, Destination, Name, Message}) ->
+	do_send(From, e, Port, UName, Serial, Destination, Name, Message);
 
 %%% CATCH-ALL %%%
 api(_From, _Port, _UName, Msg) ->
@@ -159,15 +164,24 @@ do_subscribe_signals(From, Port, UName, [Signal|Rest]) ->
 	do_subscribe_signals(From, Port, UName, Rest).	
 
 
-
+%% @private
 do_send(From, Type, Port, UName, Serial, Destination, Path, Interface, Member, Message) ->
 	RawMsg=[Type, Serial, {UName}, {Destination}, 
 		 {Path}, {Interface}, {Member},
 		 Message],
 	port_send(From, Port, RawMsg).
 
-
+%% @private
+do_send(From, r, Port, UName, Serial, Destination, Message) ->
+	RawMsg=[r, Serial, {UName}, {Destination}, Message],
+	port_send(From, Port, RawMsg).
 	
+%% @private
+do_send(From, e, Port, UName, Serial, Destination, Name, Message) ->
+	RawMsg=[e, Serial, {UName}, {Destination}, {Name}, Message],
+	port_send(From, Port, RawMsg).
+
+%% @private	
 prep_dbus_method(UName, Member, Params) ->
 	[m, 0, {UName}, {"org.freedesktop.DBus"}, 
 			 {"/org/freedesktop/DBus"}, 
@@ -175,8 +189,7 @@ prep_dbus_method(UName, Member, Params) ->
 			 {Member}]++Params.
 
 	
-
-
+%% @private
 port_send(From, Port, RawMsg) ->
 	try
 		Coded=erlang:term_to_binary(RawMsg),
@@ -187,6 +200,7 @@ port_send(From, Port, RawMsg) ->
 	end.
 
 
+%% @private
 safe_reply(To, Msg) ->
 	try
 		To ! Msg
