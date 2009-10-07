@@ -45,11 +45,13 @@
 
 %% @doc Initializes the Client Interface
 %%
+%% @spec init() -> ok | {error, Reason}
 init() ->
 	do_init(nodebug).
 
 %% @doc Initializes the Client Interface in debug mode
 %%
+%% @spec init(debug) -> ok | {error, Reason}
 init(debug) ->
 	do_init(debug).
 
@@ -200,13 +202,15 @@ real_init(Drv, Debug) ->
 %% ------------------------------------------------- Test Functions
 %%
 
-
+%% @private
 t1() ->
 	?MODULE:init(debug).
 
+%% @private
 t1(stop) ->
 	gen_server:cast(?SERVER, stop);
 
+%% @private
 t1(reg) ->
 	?MODULE:register_name("com.jldupont.erlang_dbus_client").
 
