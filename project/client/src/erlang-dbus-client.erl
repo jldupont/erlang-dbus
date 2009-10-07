@@ -196,11 +196,12 @@ maybe_init(_) ->
 
 %% @private
 real_init(Drv, Debug) ->
-	Result=?TOOLS:find_driver(Drv),
-	case Result of
+	R=?TOOLS:find_driver(Drv),
+	case R of
 		{ok, Filename} ->
-			gen_server:start_link({local, ?SERVER}, ?SERVER_MOD, [{client, self()}, {drv, Filename}, {debug, Debug}], []),
-			gen_server:cast(?SERVER, {self(), api, init});
+			Result=gen_server:start_link({local, ?SERVER}, ?SERVER_MOD, [{client, self()}, {drv, Filename}, {debug, Debug}], []),
+			gen_server:cast(?SERVER, {self(), api, init}),
+			Result;
 		_ ->
 			{error, driver_not_found}
 	end.
