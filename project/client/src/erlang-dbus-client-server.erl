@@ -75,10 +75,8 @@ api(_From, _Port, _UName, init) ->
 api(From, Port, UName, {subscribe_signals, List}) ->
 	do_subscribe_signals(From, Port, UName, List);
   
-
 api(From, Port, UName, {register, Name}) ->
 	do_register_name(From, Port, UName, Name);
-
 
 api(From, Port, UName, {method, Serial, Destination, Path, Interface, Member, Message}) ->
 	do_send(From, m, Port, UName, Serial, Destination, Path, Interface, Member, Message);
@@ -87,7 +85,7 @@ api(From, Port, UName, {signal, Serial, Destination, Path, Interface, Member, Me
 	do_send(From, s, Port, UName, Serial, Destination, Path, Interface, Member, Message);
 
 
-
+%%% CATCH-ALL %%%
 api(_From, _Port, _UName, Msg) ->
 	dmsg("api: unsupported msg: ~p", [Msg]),
 	ok.
@@ -171,7 +169,7 @@ do_send(From, Type, Port, UName, Serial, Destination, Path, Interface, Member, M
 
 	
 prep_dbus_method(UName, Member, Params) ->
-	Raw=[m, 0, {UName}, {"org.freedesktop.DBus"}, 
+	[m, 0, {UName}, {"org.freedesktop.DBus"}, 
 			 {"/org/freedesktop/DBus"}, 
 			 {"org.freedesktop.DBus"}, 
 			 {Member}]++Params.
@@ -185,10 +183,17 @@ port_send(From, Port, RawMsg) ->
 		erlang:port_command(Port, Coded)
 	catch
 		_:_ ->
-			From ! {edbus, {error, send.to.driver}}
+			safe_reply(From, {edbus, {error, send.to.driver}})
 	end.
 
-	
+
+safe_reply(To, Msg) ->
+	try
+		To ! Msg
+	catch
+		_:_ ->
+			io:format("safe_reply exception")
+	end.
 
 
 %% --------------------------------------------------------------------

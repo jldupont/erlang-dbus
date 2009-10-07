@@ -5,6 +5,8 @@
 %% @doc
 %% == Messages Generated ==
 %%
+%%	```{edbus, {error, Reason}}'''
+%%
 %%  ```{edbus, driver.crashed}'''
 %%
 %%
@@ -54,6 +56,11 @@ init(debug) ->
 
 %% @doc Subscribe a Client to a list of Signals
 %%
+%%		The subscription is based on the match rule
+%%		on the 'interface' parameter i.e. the Client
+%%		is subscribed to all signals sent on the
+%%		list of supplied interfaces.
+%%
 %% @spec subscribe_signals(List) -> ok | {error, Reason}
 %% where 
 %%	List=[string()]
@@ -80,6 +87,8 @@ register_name(_) ->
 
 %% @doc Sends a "Method Call" message
 %%
+%%	Note that the 'Serial' parameter is unused at present.
+%%
 %% @spec send_method({Serial, Destination, Path, Interface, Member, Message}) -> ok | {error, Reason}
 %% where
 %%	Serial=integer()
@@ -97,6 +106,8 @@ send_method(_) ->
 
 
 %% @doc Sends a "Signal" message
+%%
+%%	Note that the 'Serial' parameter is unused at present.
 %%
 %% @spec send_signal({Serial, Destination, Path, Interface, Member, Message}) -> ok | {error, Reason}
 %% where
@@ -116,6 +127,8 @@ send_signal(_) ->
 
 %% @doc Sends a "Method Return" message
 %%
+%%	Note that the 'Serial' parameter is unused at present.
+%%
 %% @spec send_return({Serial, Destination, Message}) -> ok | {error, Reason}
 %% where
 %%	Serial=integer()
@@ -129,6 +142,8 @@ send_return(_) ->
 	{error, invalid.parameter}.
 
 %% @doc Sends a "Error" message
+%%
+%%	Note that the 'Serial' parameter is unused at present.
 %%
 %% @spec send_error({Serial, Destination, Name, Message}) -> ok | {error, Reason}
 %% where
