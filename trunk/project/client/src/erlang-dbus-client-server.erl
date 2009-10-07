@@ -50,44 +50,45 @@ handle_cast(stop, State) ->
     {stop, normal, State};
 
 
-handle_cast({api, Msg}, State) when State#state.drvport == undefined ->
+handle_cast({From, api, Msg}, State) when State#state.drvport == undefined ->
 	dmsg(State, "> Starting Port"),
 	Drv=State#state.drvpath,
 	UName=State#state.uname,
 	Port = open_port({spawn, Drv}, [{packet, 4}, binary, exit_status]),
-	api(Port, UName, Msg),
+	api(From, Port, UName, Msg),
     {noreply, State#state{drvport=Port}};
 
 
-handle_cast({api, Msg}, State) when State#state.drvport =/= undefined ->
+handle_cast({From, api, Msg}, State) when State#state.drvport =/= undefined ->
 	Port=State#state.drvport,
 	UName=State#state.uname,
 	dmsg(State, "> Msg: ~p ... Port: ~p~n", [Msg, Port]),
-	api(Port, UName, Msg),
+	api(From, Port, UName, Msg),
     {noreply, State}.
 
 
-api(Port, UName, init) ->
+
+%% @private
+api(_From, _Port, _UName, init) ->
 	io:format("* Init ~n");
 
-api(Port, UName, {subscribe_signals, List}) ->
-	do_subscribe_signals(Port, UName, List);
+api(From, Port, UName, {subscribe_signals, List}) ->
+	do_subscribe_signals(From, Port, UName, List);
   
 
-api(Port, UName, {register, Name}) ->
-	%io:format("* Register: UName: ~p  Name: ~p", [UName, Name]),
-	Uncoded=[m, 0, {UName}, {"org.freedesktop.DBus"}, 
-			 {"/org/freedesktop/DBus"}, 
-			 {"org.freedesktop.DBus"}, 
-			 {"RequestName"}, 
-			 {str, Name}, 
-			 {ui32, ?DBUS_NAME_FLAG_DO_NOT_QUEUE}],
-	Coded=erlang:term_to_binary(Uncoded),
-	%% @TODO make safe...
-	erlang:port_command(Port, Coded);
-	
+api(From, Port, UName, {register, Name}) ->
+	do_register_name(From, Port, UName, Name);
 
-api(_Port, UName, Msg) ->
+
+api(From, Port, UName, {method, Serial, Destination, Path, Interface, Member, Message}) ->
+	do_send(From, m, Port, UName, Serial, Destination, Path, Interface, Member, Message);
+
+api(From, Port, UName, {signal, Serial, Destination, Path, Interface, Member, Message}) ->
+	do_send(From, s, Port, UName, Serial, Destination, Path, Interface, Member, Message);
+
+
+
+api(_From, _Port, _UName, Msg) ->
 	dmsg("api: unsupported msg: ~p", [Msg]),
 	ok.
 
@@ -131,6 +132,7 @@ handle_call(_Request, _From, State) ->
 %%
 
 
+%% @private
 hmsg(State, {unique_name, Name}) ->
 	dmsg(State, "** Name: ~p", [Name]),
 	State#state{uname=Name};
@@ -141,15 +143,30 @@ hmsg(State, Msg) ->
 	State.
 
 
+do_register_name(From, Port, UName, Name) ->
+	RawMsg=prep_dbus_method(UName, "RequestName", 
+					[{str, Name}, 
+			 		{ui32, ?DBUS_NAME_FLAG_DO_NOT_QUEUE}]),
+	port_send(From, Port, RawMsg).
+
+
+
 %% @private
-do_subscribe_signals(_Port, _UName, []) ->
+do_subscribe_signals(_From, _Port, _UName, []) ->
 	finished;
 
-do_subscribe_signals(Port, UName, [Signal|Rest]) ->
-	Coded=prep_dbus_method(UName, "AddMatch", ["type=\'signal\' interface=\'"++Signal++"\'"]),
-	erlang:port_command(Port, Coded),
-	do_subscribe_signals(Port, UName, Rest).	
+do_subscribe_signals(From, Port, UName, [Signal|Rest]) ->
+	RawMsg=prep_dbus_method(UName, "AddMatch", ["type=\'signal\' interface=\'"++Signal++"\'"]),
+	port_send(From, Port, RawMsg),
+	do_subscribe_signals(From, Port, UName, Rest).	
 
+
+
+do_send(From, Type, Port, UName, Serial, Destination, Path, Interface, Member, Message) ->
+	RawMsg=[Type, Serial, {UName}, {Destination}, 
+		 {Path}, {Interface}, {Member},
+		 Message],
+	port_send(From, Port, RawMsg).
 
 
 	
@@ -157,10 +174,21 @@ prep_dbus_method(UName, Member, Params) ->
 	Raw=[m, 0, {UName}, {"org.freedesktop.DBus"}, 
 			 {"/org/freedesktop/DBus"}, 
 			 {"org.freedesktop.DBus"}, 
-			 {Member}]++Params,
-	erlang:term_to_binary(Raw).
+			 {Member}]++Params.
+
 	
 
+
+port_send(From, Port, RawMsg) ->
+	try
+		Coded=erlang:term_to_binary(RawMsg),
+		erlang:port_command(Port, Coded)
+	catch
+		_:_ ->
+			From ! {edbus, {error, send.to.driver}}
+	end.
+
+	
 
 
 %% --------------------------------------------------------------------
@@ -183,6 +211,7 @@ code_change(_OldVsn, State, _Extra) ->
 %%% Internal functions
 %% --------------------------------------------------------------------
 
+%%@private
 dmsg(State, Msg) when State#state.debug==true ->
 	io:format(Msg++"~n");
 

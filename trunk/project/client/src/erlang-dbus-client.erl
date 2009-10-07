@@ -144,13 +144,13 @@ send_error(_) ->
 	{error, invalid.parameter}.
 
 %%
-%% ------------------------------------------------- Local Functions
+%% ----------------------------------------------------------------------- Local Functions
 %%
 
 %% @private
 safe_send_to_server(Message) ->
 	try
-		gen_server:cast(?SERVER, {api, Message})
+		gen_server:cast(?SERVER, {self(), api, Message})
 	catch
 		_:_ -> error
 	end.
