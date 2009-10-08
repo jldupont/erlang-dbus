@@ -35,7 +35,7 @@ doc:
 	@make -C client       doc
 
 
-rel: src doc deb up
+rel: deb doc src up
 
 
 deb:
