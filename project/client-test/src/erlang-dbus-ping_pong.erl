@@ -89,6 +89,7 @@ handle_call(_Request, _From, State) ->
 handle_cast(start, State) ->
 	Type=State#state.type,
 	io:format("Init for Type: ~p~n", [Type]),
+	io:format("OS PID: ~p~n", [os:getpid()]),
 	?EDBUS:init(),
     {noreply, State};
 
@@ -148,8 +149,3 @@ terminate(_Reason, _State) ->
 %% --------------------------------------------------------------------
 code_change(_OldVsn, State, _Extra) ->
     {ok, State}.
-
-%% --------------------------------------------------------------------
-%% ================================================= Internal functions
-%% --------------------------------------------------------------------
-

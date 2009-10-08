@@ -6,9 +6,9 @@ SRCPATH=./src/
 SOURCES=erlang-dbus-client.erl erlang-dbus-client-tools.erl
 EDOC=escript docs
 
-all: code docs
+all: code doc
 
-docs:
+doc:
 	$(EDOC)
 
 
@@ -21,4 +21,4 @@ clean:
 	@rm -f ebin/*.beam
 
 
-.PHONY: docs
+.PHONY: docs clean
