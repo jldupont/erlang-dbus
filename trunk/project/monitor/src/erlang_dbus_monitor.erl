@@ -15,7 +15,8 @@
 -module(erlang_dbus_monitor).
 
 -define(TIMEOUT, 100).
--define(DRV, "/usr/bin/erlang-dbus-driver_debug").
+-define(TOOLS,   'erlang-dbus-client-tools').
+-define(DRV,     "erlang-dbus-driver_debug").
 
 %%
 %% Exported Functions
@@ -51,7 +52,15 @@ loop() ->
 	
 
 start_drv() ->
-	Port = open_port({spawn, ?DRV++" type=\'method_call\' type=\'signal\' type=\'method_return\' type=\'error\'"}, [{packet, 4}, binary, exit_status]),
-	self() ! {port, Port}.	
+	Result=?TOOLS:find_driver(?DRV),
+	case Result of
+		{ok, Filename} ->
+			Port = open_port({spawn, Filename++" type=\'method_call\' type=\'signal\' type=\'method_return\' type=\'error\'"}, [{packet, 4}, binary, exit_status]),
+			self() ! {port, Port},
+			Result;
+		_ ->
+			{error, driver_not_found}
+	end.
+		   
 
 
