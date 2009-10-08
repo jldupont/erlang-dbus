@@ -35,7 +35,7 @@ doc:
 	@make -C client       doc
 
 
-rel: doc deb up
+rel: src doc deb up
 
 
 deb:
@@ -54,6 +54,9 @@ deb:
 	@cp client/src/erlang-dbus-client.erl        /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/src
 	@cp client/src/erlang-dbus-client-server.erl /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/src
 	@cp client/src/erlang-dbus-client-tools.erl  /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/src
+	
+	@cp monitor/src/*.erl                        /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/src
+	@cp monitor/ebin/*.beam                      /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/ebin	
 	
 	@cp client/ebin/erlang-dbus-client.beam        /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/ebin
 	@cp client/ebin/erlang-dbus-client-server.beam /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/ebin
