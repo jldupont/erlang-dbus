@@ -2,7 +2,7 @@
 # @author Jean-Lou Dupont
 # @title  Erlang-DBus
 #
-VERSION=`cat VERSION`
+VERSION:=`cat VERSION`
 PRJ=erlang-dbus
 GCODE_PRJ=erlang-dbus
 DEBIAN_PKG_VER=1
@@ -12,7 +12,7 @@ CTLFILES=$(DPREFIX)/control $(DPREFIX)/postinst $(DPREFIX)/postrm $(DPREFIX)/pre
 UPREFIX=/tmp/$(PRJ)/debian/usr
 DOCMAIN=./docs/html/main.html
 
-IDIST=../../dists/stable/main/binary-i386
+IDIST=dists/stable/main/binary-i386
 
 
 all:
@@ -70,10 +70,10 @@ deb:
 	@dpkg-deb --build /tmp/$(PRJ)/debian /tmp/$(PRJ)/$(PRJ).deb
 	
 	@echo "> copying .deb to repository"
-	@cp /tmp/$(PRJ)/$(PRJ).deb $(IDIST)/$(PRJ)_$(VERSION)-$(DEBIAN_PKG_VER)_i386.deb
+	@cp /tmp/$(PRJ)/$(PRJ).deb ../../$(IDIST)/$(PRJ)_$(VERSION)-$(DEBIAN_PKG_VER)_i386.deb
 	
 	@echo "> running dpkg-scanpackages"
-	@dpkg-scanpackages -m $(IDIST) /dev/null | gzip -9c > $(IDIST)/Packages.gz
+	@cd ../.. && dpkg-scanpackages -m $(IDIST) /dev/null | gzip -9c > $(IDIST)/Packages.gz
 
 
 src:
