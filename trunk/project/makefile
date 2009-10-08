@@ -47,6 +47,7 @@ deb:
 	@rsync -r --exclude=*.svn* packages/debian /tmp/$(PRJ)
 	
 	@echo "> cloning required files"
+	@cp monitor/erlang-dbus-monitor              /tmp/$(PRJ)/debian/usr/bin
 	@cp driver/Debug/erlang-dbus-driver_debug    /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/driver
 	@cp driver/Release/erlang-dbus-driver        /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/driver
 	
