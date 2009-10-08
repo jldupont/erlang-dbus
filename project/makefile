@@ -1,6 +1,6 @@
 #
 # @author Jean-Lou Dupont
-#
+# @title  Erlang-DBus
 #
 VERSION=`cat VERSION`
 PRJ=erlang_dbus
@@ -43,35 +43,35 @@ deb:
 	@echo "> copying template from 'packages' to '/tmp'"
 	@rm -rf /tmp/$(PRJ)
 	@mkdir /tmp/$(PRJ)
-	@cp -r packages/debian /tmp/$(PRJ)
+	@rsync -r --exclude=*.svn* packages/debian /tmp/$(PRJ)
 	
 	@echo "> cloning required files"
-	@cp lib/include/epapi.h                 /tmp/$(PRJ)/debian/usr/include/epapi.h
-	@cp lib/include/epapi_msg.h             /tmp/$(PRJ)/debian/usr/include/epapi_msg.h
-	@cp lib/include/epapi_pkt.h             /tmp/$(PRJ)/debian/usr/include/epapi_pkt.h
-	@cp lib/include/epapi_term.h            /tmp/$(PRJ)/debian/usr/include/epapi_term.h
-	@cp lib/Debug/libepapi_debug.so         /tmp/$(PRJ)/debian/usr/lib/libepapi_debug.so-$(VERSION)
-	@cp lib/Release/libepapi.so             /tmp/$(PRJ)/debian/usr/lib/libepapi.so-$(VERSION)
-	@cp loop-drv/Debug/epapi_loop_drv_debug /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/ebin/epapi_loop_drv_debug
-	@cp loop-drv/Release/epapi_loop_drv     /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/ebin/epapi_loop_drv
-	@cp loop-test/ebin/test.beam            /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/ebin/test.beam
-	@cp loop-test/src/test.erl              /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/src/test.erl
-
-	@echo "> adusting version info"
-	@./.tools/adjust_version.py $(VERSION) $(UPREFIX)/include/epapi.h $(UPREFIX)/lib/pkgconfig/epapi.pc
-	@./.tools/adjust_version.py $(VERSION) $(CTLFILES)
-
-	@echo "> adjusting DEBIAN control files permissions"
-	@chmod 0775 $(CTLFILES)
-
-	@echo "> running dpkg-deb"
-	@dpkg-deb --build /tmp/$(PRJ)/debian /tmp/$(PRJ)/$(PRJ).deb
+	@cp driver/Debug/erlang-dbus-driver_debug    /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/driver
+	@cp driver/Release/erlang-dbus-driver        /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/driver
 	
-	@echo "> copying .deb to repository"
-	@cp /tmp/$(PRJ)/$(PRJ).deb $(IDIST)/$(PRJ)_$(VERSION)-$(DEBIAN_PKG_VER)_i386.deb
+	@cp client/src/erlang-dbus-client.erl        /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/src
+	@cp client/src/erlang-dbus-client-server.erl /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/src
+	@cp client/src/erlang-dbus-client-tools.erl  /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/src
 	
-	@echo "> running dpkg-scanpackages"
-	@dpkg-scanpackages -m $(IDIST) /dev/null | gzip -9c > $(IDIST)/Packages.gz
+	@cp client/ebin/erlang-dbus-client.beam        /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/ebin
+	@cp client/ebin/erlang-dbus-client-server.beam /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/ebin
+	@cp client/ebin/erlang-dbus-client-tools.beam  /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/ebin
+	
+	#@echo "> adusting version info"
+	#@./.tools/adjust_version.py $(VERSION) $(UPREFIX)/include/epapi.h $(UPREFIX)/lib/pkgconfig/epapi.pc
+	#@./.tools/adjust_version.py $(VERSION) $(CTLFILES)
+
+	#@echo "> adjusting DEBIAN control files permissions"
+	#@chmod 0775 $(CTLFILES)
+
+	#@echo "> running dpkg-deb"
+	#@dpkg-deb --build /tmp/$(PRJ)/debian /tmp/$(PRJ)/$(PRJ).deb
+	
+	#@echo "> copying .deb to repository"
+	#@cp /tmp/$(PRJ)/$(PRJ).deb $(IDIST)/$(PRJ)_$(VERSION)-$(DEBIAN_PKG_VER)_i386.deb
+	
+	#@echo "> running dpkg-scanpackages"
+	#@dpkg-scanpackages -m $(IDIST) /dev/null | gzip -9c > $(IDIST)/Packages.gz
 
 
 src:
