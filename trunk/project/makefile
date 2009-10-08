@@ -4,6 +4,7 @@
 #
 VERSION=`cat VERSION`
 PRJ=erlang_dbus
+GCODE_PRJ=erlang-dbus
 DEBIAN_PKG_VER=1
 
 DPREFIX=/tmp/$(PRJ)/debian/DEBIAN
@@ -57,21 +58,21 @@ deb:
 	@cp client/ebin/erlang-dbus-client-server.beam /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/ebin
 	@cp client/ebin/erlang-dbus-client-tools.beam  /tmp/$(PRJ)/debian/usr/lib/erlang/lib/$(PRJ)/ebin
 	
-	#@echo "> adusting version info"
-	#@./.tools/adjust_version.py $(VERSION) $(UPREFIX)/include/epapi.h $(UPREFIX)/lib/pkgconfig/epapi.pc
-	#@./.tools/adjust_version.py $(VERSION) $(CTLFILES)
+	@echo "> adusting version info"
+	@./.tools/adjust_version.py $(VERSION) client/doc/overview-summary.html
+	@./.tools/adjust_version.py $(VERSION) $(CTLFILES)
 
-	#@echo "> adjusting DEBIAN control files permissions"
-	#@chmod 0775 $(CTLFILES)
+	@echo "> adjusting DEBIAN control files permissions"
+	@chmod 0775 $(CTLFILES)
 
-	#@echo "> running dpkg-deb"
-	#@dpkg-deb --build /tmp/$(PRJ)/debian /tmp/$(PRJ)/$(PRJ).deb
+	@echo "> running dpkg-deb"
+	@dpkg-deb --build /tmp/$(PRJ)/debian /tmp/$(PRJ)/$(PRJ).deb
 	
-	#@echo "> copying .deb to repository"
-	#@cp /tmp/$(PRJ)/$(PRJ).deb $(IDIST)/$(PRJ)_$(VERSION)-$(DEBIAN_PKG_VER)_i386.deb
+	@echo "> copying .deb to repository"
+	@cp /tmp/$(PRJ)/$(PRJ).deb $(IDIST)/$(PRJ)_$(VERSION)-$(DEBIAN_PKG_VER)_i386.deb
 	
-	#@echo "> running dpkg-scanpackages"
-	#@dpkg-scanpackages -m $(IDIST) /dev/null | gzip -9c > $(IDIST)/Packages.gz
+	@echo "> running dpkg-scanpackages"
+	@dpkg-scanpackages -m $(IDIST) /dev/null | gzip -9c > $(IDIST)/Packages.gz
 
 
 src:
@@ -83,11 +84,14 @@ src:
 	@cp -R ../project/* /tmp/$(PRJ)_sources/$(PRJ)
 
 	@echo "> zipping"
-	cd /tmp/$(PRJ)_sources && zip -r $(PRJ).zip $(PRJ) -x *.svn* *.so *.o *.os *html* *.old*
+	cd /tmp/$(PRJ)_sources && zip -r $(PRJ).zip $(PRJ) -x *.svn* *.so *.o *.os *.old*
 	mv /tmp/$(PRJ)_sources/$(PRJ).zip /tmp/$(PRJ)_sources/$(PRJ)-$(VERSION).zip
 
 up:
 	@echo "* Uploading sources archive to GoogleCode"
-	@./.tools/upload.py /tmp/$(PRJ)_sources/$(PRJ)-$(VERSION).zip $(PRJ)
+	@./.tools/upload.py /tmp/$(PRJ)_sources/$(PRJ)-$(VERSION).zip $(GCODE_PRJ)
+
+.PHONY: all doc deb src up rel clean
+
 
 	

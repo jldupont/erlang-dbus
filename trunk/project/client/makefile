@@ -21,4 +21,4 @@ clean:
 	@rm -f ebin/*.beam
 
 
-.PHONY: docs clean
+.PHONY: doc clean
