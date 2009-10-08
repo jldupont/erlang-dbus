@@ -1,7 +1,7 @@
 ** overview.edoc file for Erlang-DBus-Client library **
 
 @author: Jean-Lou Dupont
-@title Erlang DBus Client Library
+@title Erlang DBus Client Library - version $version
 
 @doc 
 
