@@ -16,20 +16,22 @@ IDIST=../../dists/stable/main/binary-i386
 
 all:
 	@echo "Version: ${VERSION}"
-	@make -C lib        
-	@make -C loop-drv   
-	@make -C loop-test  
+	@make -C client
+	@make -C client-test        
+	@make -C driver   
+	@make -C driver-test  
+	@make -C monitor
 
 clean:
 	@echo "Version: ${VERSION}"
-	@make -C lib       clean        
-	@make -C loop-drv  clean 
-	@make -C loop-test clean
+	@make -C client       clean
+	@make -C client-test  clean      
+	@make -C driver       clean
+	@make -C driver-test  clean
+	@make -C monitor      clean
 	
 doc:
-	@echo "Version: ${VERSION}"
-	@cd docs && doxygen
-	@./.tools/adjust_version.py $(VERSION) $(DOCMAIN) $(DOCMAIN)	
+	@make -C client       doc
 
 
 rel: doc deb up
