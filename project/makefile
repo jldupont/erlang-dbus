@@ -3,7 +3,7 @@
 # @title  Erlang-DBus
 #
 VERSION=`cat VERSION`
-PRJ=erlang_dbus
+PRJ=erlang-dbus
 GCODE_PRJ=erlang-dbus
 DEBIAN_PKG_VER=1
 
