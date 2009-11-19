@@ -1,0 +1,126 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Erlang DBus Client Library - version $version
+</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<h1>Erlang DBus Client Library - version $version
+</h1>
+<p><b>Authors:</b> Jean-Lou Dupont.</p>
+
+
+<h3><a name="Introduction">Introduction</a></h3>
+
+<p>This project consists of an Erlang Client Interface Library for accessing DBus.
+Two components are made available:</p>
+
+ <p>- a Port Driver (interface to libdbus)</p>
+ 
+ <p>- an Erlang Client library</p>
+ 
+<p>The dependencies are listed below:</p>
+
+ <p>- Erlang &gt;= R13</p>
+ 
+ <p>- EPAPI ("Erlang Port API" available at <a href="http://epapi.googlecode.com/" target="_top"><tt>http://epapi.googlecode.com/</tt></a>)</p>
+ 
+  
+<h3><a name="Overview">Overview</a></h3>
+
+<h4><a name="Dbus_basics">Dbus basics</a></h4>
+
+<p>At its core, DBus mimics the functionality of a bus to some extent: once connected to the bus, 
+a Client is uniquely identified (analoguous to a timeslot on a physical bus) and can send 
+messages freely. Message reception on the other hand differs from a physical bus: only messages
+"filtered in" are received.</p>
+
+<h4><a name="Driver_basics">Driver basics</a></h4>
+
+<p>The interface is composed of two independent processing paths in separate threads.</p>
+
+<p>The "ingress" thread processes messages received on DBus and forwards those to
+the Erlang Client via a "Port Driver" (erlang_dbus_driver).</p>
+
+<p>The "egress" thread processes messages originated from the Erlang Client side
+onto the DBus.</p>
+
+<h4><a name="Library_basics">Library basics</a></h4>
+
+<p>The Client library consists of a process which spawns the Port Driver
+and mediates between the User of the Client Library and DBus.</p>
+
+<p>Once initialized through the <code>init()</code> method:</p>
+
+ <p>- the User process will received <code>{edbus, {ready, UName}}</code> message    
+indicating that the library is ready for access. The "Unique Name"   
+DBus has assigned to the Client connection is also provided.</p>
+   
+ <p>- the User can from that moment start using the Client library e.g.
+   the User can register a name through the <code>register_name()</code> method.</p>
+   
+ <p>- the User should configure any signal filters through the <code>subscribe_signals()</code> method</p>
+ 
+ <p>- the User will receive all messages destined to it (i.e. UName / Name) regardless of type  </p>
+
+
+<h4><a name="Marshalling_Protocol">Marshalling Protocol</a></h4>
+
+<h5><a name="Type_conversion">Type conversion</a></h5>
+
+<ul>
+ <li>dbus byte    --&gt; erlang {byte, int()}</li>
+ <li>dbus boolean --&gt; erlang {bool, true | false}</li>
+ <li>dbus INT16   --&gt; erlang {i16, int()}</li>
+ <li>dbus UINT16  --&gt; erlang {ui16, int()}</li>
+ <li>dbus INT32   --&gt; erlang {i32, int()}</li>
+ <li>dbus UINT32  --&gt; erlang {ui32, int()}</li>
+ <li>dbus INT64   --&gt; erlang {i64, int()}</li>
+ <li>dbus UINT64  --&gt; erlang {ui64, int()}</li>
+ <li>dbus DOUBLE  --&gt; erlang {f, float()}</li>
+ <li>dbus STRING  --&gt; erlang {str, list(int())}</li>
+ <li>dbus OBJECT_PATH --&gt; erlang {op, list(int())}</li>
+ <li>dbus ARRAY   --&gt; erlang {a, [term()]}</li>
+ <li>dbus VARIANT --&gt; erlang {v, term()}</li>
+ <li>dbus STRUCT  --&gt; erlang {st, [term()]}</li>
+ <li>dbus DICT    --&gt; erlang {d, term(), term()}</li>
+ <li>dbus SIGNATURE --&gt; erlang {sig, list(int())}</li>
+</ul>
+
+<h5><a name="Ingress_and_Egress_message_format">Ingress and Egress message format</a></h5>
+
+<p>The following message format applies between the Erlang Client library and the Port Driver:</p>
+
+Method_Call:
+	<pre>	[m, Serial, {Sender}, {Destination}, {Path}, {Interface}, {Member}, Message]</pre>
+	
+Signal:
+	<pre>	[s, Serial, {Sender}, {Destination}, {Path}, {Interface}, {Member}, Message]</pre>
+
+Method_Return:
+	<pre>	[r, Serial, {Sender}, {Destination}, Message]</pre>
+
+Error:
+	<pre>	[e, Serial, {Sender}, {Destination}, {Name}, Message]</pre>
+
+<p>Where:</p>
+
+	<ul>
+		<li>Serial=int()</li>
+		<li>Sender=Destination=Path=Interface=Member=Name=string()</li>
+		<li>Message=term()</li>
+	</ul>
+
+<h3><a name="Sample_Usage">Sample Usage</a></h3>
+
+<p>For example of usage, please refer to the "Ping" and "Pong" test programs.</p>
+
+
+
+<hr>
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc, Oct 8 2009, 09:30:42.</i></p>
+</body>
+</html>
