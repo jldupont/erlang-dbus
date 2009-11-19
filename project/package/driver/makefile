@@ -2,7 +2,7 @@
 # @author Jean-Lou Dupont
 #
 
-BUILDS=Release Debug
+BUILDS=Release
 TARGETS=all clean
 
 $(TARGETS):
