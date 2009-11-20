@@ -1,5 +1,6 @@
-erlang-dbus (0.3-1) stable; urgency=low
+erlang-dbus (0.3) stable; urgency=low
 
+  NMU
   * repackaging for my Launchpad PPA.
  
- -- Jean-Lou Dupont  <jl@jldupont.com>  Fri, 20 Nov 2009 09:44:00 -0500
+ -- Jean-Lou Dupont (Debian repositories) <jl@jldupont.com>  Fri, 20 Nov 2009 09:44:00 -0500
