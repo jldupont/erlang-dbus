@@ -6,7 +6,7 @@ SRCPATH=./src/
 SOURCES=erlang-dbus-client.erl erlang-dbus-client-tools.erl
 EDOC=escript docs
 
-all: code doc
+all: code
 
 doc:
 	$(EDOC)

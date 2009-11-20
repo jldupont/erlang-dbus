@@ -1,7 +1,7 @@
 Source: erlang-dbus
 Priority: optional
-Section: Other
-Build-Depends: erlang (>=1:12.b.5), debhelper (>= 7)
+Section: misc
+Build-Depends: erlang-dev (>=1:12.b.5), erlang-base (>=1:12.b.5), libdbus-1-dev (>= 1.2.12), debhelper (>= 7)
 Standards-Version: 3.8.0
 Maintainer: Jean-Lou Dupont (Debian repositories) <jl@jldupont.com>
 Homepage: http://jldupont.blogspot.com/
