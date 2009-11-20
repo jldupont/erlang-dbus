@@ -1,7 +1,6 @@
-Package: erlang-dbus
+Source: erlang-dbus
 Version: $version
 Priority: optional
-Architecture: i386
 Section: Other
 Depends: dbus (>=1.2.12), epapi (>=0.7)
 Maintainer: Jean-Lou Dupont <jl@jldupont.com>
