@@ -1,13 +1,13 @@
 Source: erlang-dbus
 Priority: optional
-Section: misc
-Build-Depends: erlang-dev (>=1:12.b.5), erlang-base (>=1:12.b.5), libdbus-1-dev (>= 1.2.12), debhelper (>= 7)
+Section: devel
+Build-Depends: epapi (>=0.7), erlang-dev (>=1:12.b.5), erlang-base (>=1:12.b.5), libdbus-1-dev (>= 1.2.12), debhelper (>= 7)
 Standards-Version: 3.8.0
 Maintainer: Jean-Lou Dupont (Debian repositories) <jl@jldupont.com>
 Homepage: http://jldupont.blogspot.com/
 
 Package: erlang-dbus
-Architecture: all
+Architecture: i386
 Depends: dbus (>=1.2.12), epapi (>=0.7), ${misc:Depends}
 Description: Erlang Client library and driver for DBus
  .

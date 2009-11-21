@@ -3,7 +3,7 @@
 
 ERLC=erlc -o ebin -I include
 SRCPATH=./src/
-SOURCES=erlang-dbus-client.erl erlang-dbus-client-tools.erl
+SOURCES=erlang-dbus-client.erl erlang-dbus-client-server.erl erlang-dbus-client-tools.erl
 EDOC=escript docs
 
 all: code
