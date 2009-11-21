@@ -1,6 +1,6 @@
-erlang-dbus (0.3-0jldupont1~jaunty1)  jaunty; urgency=low
+erlang-dbus (0.3-0jldupont1~jaunty2)  jaunty; urgency=low
 
   NMU
-  * repackaging for my Launchpad PPA.
+  * repackaging with primary key.
  
- -- Jean-Lou Dupont (Debian repositories) <jl@jldupont.com>  Fri, 20 Nov 2009 09:44:00 -0500
+ -- Jean-Lou Dupont <jl@jldupont.com>  Sat, 21 Nov 2009 07:23:00 -0500

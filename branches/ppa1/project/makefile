@@ -19,8 +19,18 @@ deb:
 	@rsync -r --exclude=*.svn* package/* "/tmp/$(PRJ)/$(PRJ)-$(VERSION)"
 	@echo "Copying debian folder"
 	@rsync -r --exclude=*.svn* packages/debian "/tmp/$(PRJ)/$(PRJ)-$(VERSION)"
-	@echo "Updating Version"
 	
+	@echo "Running 'debuild'"
+	@cd "/tmp/$(PRJ)/$(PRJ)-$(VERSION)" && debuild -S -sa
+	
+	@echo " ----------------------------- "
+	@echo " ----------------------------- "
+	@echo " RUNNING PBUILDER "
+	@cd "/tmp/$(PRJ)/" && sudo pbuilder build *.dsc
+
+up:
+	@echo "UPLOADING TO PPA"
+	@cd "/tmp/$(PRJ)/" && dput ppa:jldupont/jldupont *.changes
 
 .PHONY: deb clean
 	
