@@ -1,4 +1,4 @@
-erlang-dbus (0.3)  jaunty; urgency=low
+erlang-dbus (0.3-0jldupont1~jaunty1)  jaunty; urgency=low
 
   NMU
   * repackaging for my Launchpad PPA.

@@ -19,19 +19,19 @@ clean:
 	@make -C monitor      clean
 	
 install:
-	@cp monitor/erlang-dbus-monitor                /usr/bin/
-	@cp driver/Release/erlang-dbus-driver          /usr/lib/erlang/lib/$(PRJ)/driver
+	@install -D $(CURDIR)/monitor/erlang-dbus-monitor                $(DESTDIR)/usr/bin/erlang-dbus-monitor
+	@install -D $(CURDIR)/driver/Release/erlang-dbus-driver          $(DESTDIR)/usr/lib/erlang/lib/$(PRJ)/driver/erlang-dbus-driver
 	
-	@cp client/src/erlang-dbus-client.erl          /usr/lib/erlang/lib/$(PRJ)/src
-	@cp client/src/erlang-dbus-client-server.erl   /usr/lib/erlang/lib/$(PRJ)/src
-	@cp client/src/erlang-dbus-client-tools.erl    /usr/lib/erlang/lib/$(PRJ)/src
+	@install -D $(CURDIR)/client/src/erlang-dbus-client.erl          $(DESTDIR)/usr/lib/erlang/lib/$(PRJ)/src/erlang-dbus-client.erl
+	@install -D $(CURDIR)/client/src/erlang-dbus-client-server.erl   $(DESTDIR)/usr/lib/erlang/lib/$(PRJ)/src/erlang-dbus-client-server.erl
+	@install -D $(CURDIR)/client/src/erlang-dbus-client-tools.erl    $(DESTDIR)/usr/lib/erlang/lib/$(PRJ)/src/erlang-dbus-client-tools.erl
 	
-	@cp monitor/src/*.erl                          /usr/lib/erlang/lib/$(PRJ)/src
-	@cp monitor/ebin/*.beam                        /usr/lib/erlang/lib/$(PRJ)/ebin	
+	@install -D $(CURDIR)/monitor/src/erlang_dbus_monitor.erl        $(DESTDIR)/usr/lib/erlang/lib/$(PRJ)/src/erlang_dbus_monitor.erl
+	@install -D $(CURDIR)/monitor/ebin/erlang_dbus_monitor.beam      $(DESTDIR)/usr/lib/erlang/lib/$(PRJ)/ebin/erlang_dbus_monitor.beam
 	
-	@cp client/ebin/erlang-dbus-client.beam        /usr/lib/erlang/lib/$(PRJ)/ebin
-	@cp client/ebin/erlang-dbus-client-server.beam /usr/lib/erlang/lib/$(PRJ)/ebin
-	@cp client/ebin/erlang-dbus-client-tools.beam  /usr/lib/erlang/lib/$(PRJ)/ebin
+	@install -D $(CURDIR)/client/ebin/erlang-dbus-client.beam        $(DESTDIR)/usr/lib/erlang/lib/$(PRJ)/ebin/erlang-dbus-client.beam
+	@install -D $(CURDIR)/client/ebin/erlang-dbus-client-server.beam $(DESTDIR)/usr/lib/erlang/lib/$(PRJ)/ebin/erlang-dbus-client-server.beam
+	@install -D $(CURDIR)/client/ebin/erlang-dbus-client-tools.beam  $(DESTDIR)/usr/lib/erlang/lib/$(PRJ)/ebin/erlang-dbus-client-tools.beam
 	
 
 .PHONY: all clean install
