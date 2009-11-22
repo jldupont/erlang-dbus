@@ -1,6 +1,5 @@
-erlang-dbus (0.3-0jldupont1~jaunty2)  jaunty; urgency=low
+erlang-dbus (0.3-0jldupont1~_DIST_2)  _DIST_; urgency=low
 
-  NMU
   * repackaging with primary key.
  
  -- Jean-Lou Dupont <jl@jldupont.com>  Sat, 21 Nov 2009 07:23:00 -0500
